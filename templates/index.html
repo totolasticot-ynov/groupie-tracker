@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Groupie Tracker</title>
+</head>
+<body>
+    <h1>Groupie Tracker - Démo</h1>
+
+    <h2>Liste des Artistes</h2>
+    <ul>
+        {{ range .Artists }}
+            <li>{{ .Name }}</li>
+        {{ end }}
+    </ul>
+
+    <hr>
+
+    <h2>Détail des concerts (Relations ID 1)</h2>
+    <div style="border: 1px solid black; padding: 10px;">
+        {{ range $key, $value := .Relations.DatesLocations }}
+            <p><strong>Lieu ($key) :</strong> {{ $key }}</p>
+            <p><strong>Dates ($value) :</strong> 
+                {{ range $value }} 
+                    <span>{{ . }} </span> 
+                {{ end }}
+            </p>
+            <br>
+        {{ end }}
+    </div>
+
+    <script>
+        // Initialisation du tableau JS [cite: 28]
+        let tableauAvecTousLesArtistes = [];
+
+        // Injection des données Go dans le tableau JS [cite: 31, 34]
+        {{ range .Artists }}
+            tableauAvecTousLesArtistes.push("{{ .Name }}");
+        {{ end }}
+
+        console.log("Données chargées depuis Go :", tableauAvecTousLesArtistes);
+    </script>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
