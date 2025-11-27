@@ -7,28 +7,26 @@ import (
 	"net/http"
 )
 
-// 1. Structure Artist (Standard) [cite: 39]
+// Structure Artist
 type Artist struct {
 	Id    int    `json:"id"`
 	Name  string `json:"name"`
-	Image string `json:"image"`
+	Image string `json:"image"` // Servira ici pour la pochette de l'album
 }
 
-// 2. Structure Relations avec la Map demandée [cite: 16, 18, 19]
-// Les clés sont dynamiques (ex: "dunedin-new_zealand"), donc on utilise map[string][]string
+// Structure Relations
 type Relations struct {
 	Id             int                 `json:"id"`
 	DatesLocations map[string][]string `json:"datesLocations"`
 }
 
-// Structure globale pour envoyer les données à la page HTML
 type PageData struct {
 	Artists   []Artist
-	Relations Relations // On ajoute une relation pour l'exemple du PDF
+	Relations Relations
 }
 
 func main() {
-	// Servir les fichiers statiques (CSS/JS) [cite: 51]
+	// Important : On gère le sous-dossier img pour les images
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -39,24 +37,25 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	// A. Récupération des Artistes (Simulé ou via API réelle)
-	// Pour l'exemple, je récupère la vraie API
-	artists, err := getArtists()
+	// 1. Récupérer les artistes de l'API
+	apiArtists, err := getArtists()
 	if err != nil {
-		http.Error(w, "Erreur API Artistes", 500)
-		return
+		log.Println("Erreur API:", err)
+		// On continue même si l'API plante, pour afficher tes artistes perso
 	}
 
-	// B. Récupération d'une Relation (Pour tester la Map du PDF)
-	// Je prends la relation de l'ID 1 pour l'exemple
-	relation, err := getRelation(1)
-	if err != nil {
-		http.Error(w, "Erreur API Relations", 500)
-		return
-	}
+	// 2. Créer tes artistes personnalisés
+	myArtists := getCustomArtists()
+
+	// 3. Fusionner les deux listes (Les tiens en premier !)
+	// On ajoute 'apiArtists' à la suite de 'myArtists'
+	allArtists := append(myArtists, apiArtists...)
+
+	// Pour l'exemple des relations (inchangé)
+	relation, _ := getRelation(1)
 
 	data := PageData{
-		Artists:   artists,
+		Artists:   allArtists,
 		Relations: relation,
 	}
 
@@ -69,7 +68,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-// Fonctions utilitaires pour contacter l'API
+// Ta liste personnalisée avec les pochettes d'albums
+func getCustomArtists() []Artist {
+	return []Artist{
+		{Id: 101, Name: "Aphex Twin", Image: "https://upload.wikimedia.org/wikipedia/en/8/82/Selected_Ambient_Works_85-92.png"},                                      // Selected Ambient Works
+		{Id: 102, Name: "Crystal Castles", Image: "https://upload.wikimedia.org/wikipedia/en/a/ae/Crystal_Castles_%28album%29.png"},                                  // Crystal Castles (I)
+		{Id: 103, Name: "Ennio Morricone", Image: "https://upload.wikimedia.org/wikipedia/en/0/03/The_Good_the_Bad_and_the_Ugly_soundtrack_cover.jpg"},               // The Good, The Bad...
+		{Id: 104, Name: "Rihanna", Image: "https://upload.wikimedia.org/wikipedia/en/3/32/Rihanna_-_Anti.png"},                                                       // Anti
+		{Id: 105, Name: "Daft Punk", Image: "https://upload.wikimedia.org/wikipedia/en/a/ae/Daft_Punk_-_Discovery.jpg"},                                              // Discovery
+		{Id: 106, Name: "TV Girl", Image: "https://upload.wikimedia.org/wikipedia/en/3/30/TV_Girl_-_French_Exit.png"},                                                // French Exit
+		{Id: 107, Name: "Björk", Image: "https://upload.wikimedia.org/wikipedia/en/a/a6/Bjork_Homogenic.png"},                                                        // Homogenic
+		{Id: 108, Name: "Nirvana", Image: "https://upload.wikimedia.org/wikipedia/en/b/b7/NirvanaNevermindalbumcover.jpg"},                                           // Nevermind
+		{Id: 109, Name: "Snow Strippers", Image: "https://e.snmc.io/i/600/s/5712f55977a4505030245a4911005f77/10839843/snow-strippers-april-mixtape-3-Cover-Art.jpg"}, // April Mixtape 3 (Exemple)
+		{Id: 110, Name: "Venetian Snares", Image: "https://upload.wikimedia.org/wikipedia/en/2/22/Rossz_csillag_alatt_született.jpg"},                                // Rossz Csillag...
+		{Id: 111, Name: "Boards of Canada", Image: "https://upload.wikimedia.org/wikipedia/en/e/e6/Boards_of_Canada_-_Music_Has_the_Right_to_Children.png"},          // Music Has the Right to Children
+	}
+}
+
 func getArtists() ([]Artist, error) {
 	resp, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
 	if err != nil {
@@ -82,15 +97,11 @@ func getArtists() ([]Artist, error) {
 }
 
 func getRelation(id int) (Relations, error) {
-	// Note: L'API réelle retourne parfois une structure imbriquée,
-	// mais ici on adapte selon la structure stricte demandée par ton PDF.
-	// URL exemple : https://groupietrackers.herokuapp.com/api/relations/1
 	resp, err := http.Get("https://groupietrackers.herokuapp.com/api/relations/1")
 	if err != nil {
 		return Relations{}, err
 	}
 	defer resp.Body.Close()
-
 	var result Relations
 	json.NewDecoder(resp.Body).Decode(&result)
 	return result, nil
