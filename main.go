@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-// --- STRUCTURES DE DONNÉES  ---
+// --- STRUCTURES ---
 
 type Artist struct {
 	Id           int      `json:"id"`
@@ -26,7 +26,7 @@ type Relations struct {
 	DatesLocations map[string][]string `json:"datesLocations"`
 }
 
-// Pour charger toutes les relations d'un coup (Optimisation Recherche)
+// Pour l'API Index (optimisation)
 type RelationsIndex struct {
 	Index []Relations `json:"index"`
 }
@@ -48,14 +48,13 @@ type ArtistPageData struct {
 	Relations Relations
 }
 
-// Structure JSON pour la barre de recherche
 type SearchResult struct {
 	Text     string `json:"text"`
 	Type     string `json:"type"`
 	ArtistId int    `json:"artistId"`
 }
 
-// --- VARIABLES GLOBALES (CACHE) ---
+// --- VARIABLES GLOBALES ---
 var (
 	allArtists   []Artist
 	allRelations []Relations
@@ -65,31 +64,29 @@ var (
 // --- MAIN ---
 
 func main() {
-	// Chargement des données au démarrage pour la recherche rapide [cite: 3]
-	log.Println("Chargement des données API...")
-	loadData()
+	log.Println("🔄 Chargement des données...")
+	loadData() // Chargement au démarrage
 
-	// Servir les fichiers statiques (Images, JS)
+	// Servir les fichiers Static
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	// Routes (Client-Server interactions) [cite: 12]
-	http.HandleFunc("/", indexHandler)        // Accueil + Filtres
-	http.HandleFunc("/artist", artistHandler) // Page Détail + Carte
-	http.HandleFunc("/search", searchHandler) // API Recherche JSON
+	// Routes
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/artist", artistHandler)
+	http.HandleFunc("/search", searchHandler)
 
-	log.Println("✅ Serveur démarré sur http://localhost:8080")
-	// Gestion des erreurs serveur
+	log.Println("✅ Serveur prêt sur http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-// --- LOGIQUE DE CHARGEMENT ---
+// --- LOGIQUE CHARGEMENT ---
 
 func loadData() {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// 1. Récupérer les artistes (API + Custom)
+	// 1. Artistes API + Custom
 	apiArtists, err := getArtists()
 	if err != nil {
 		log.Println("Erreur API Artistes:", err)
@@ -98,15 +95,13 @@ func loadData() {
 	myArtists := getCustomArtists()
 	allArtists = append(myArtists, apiArtists...)
 
-	// 2. Récupérer l'index des relations (API)
+	// 2. Relations API
 	apiRelIndex, err := getAllRelationsIndex()
 	if err == nil {
 		allRelations = apiRelIndex.Index
-	} else {
-		log.Println("Erreur API Relations:", err)
 	}
 
-	// Ajouter des relations fictives pour tes artistes persos (pour la démo)
+	// 3. Relations Custom (Simulation)
 	for _, art := range myArtists {
 		allRelations = append(allRelations, Relations{
 			Id: art.Id,
@@ -119,7 +114,6 @@ func loadData() {
 
 // --- HANDLERS ---
 
-// Gère la recherche dynamique (AJAX) [cite: 14]
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := strings.ToLower(r.URL.Query().Get("q"))
 	results := []SearchResult{}
@@ -134,43 +128,37 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	relations := allRelations
 	mutex.Unlock()
 
-	seen := make(map[string]bool) // Pour éviter les doublons
+	seen := make(map[string]bool)
 
 	for _, a := range artists {
-		// Recherche par Nom
 		if strings.Contains(strings.ToLower(a.Name), query) {
-			addResult(&results, a.Name, "artist/band", a.Id, seen)
+			addResult(&results, a.Name, "Artiste", a.Id, seen)
 		}
-		// Recherche par Membres
 		for _, m := range a.Members {
 			if strings.Contains(strings.ToLower(m), query) {
-				addResult(&results, m, "member", a.Id, seen)
+				addResult(&results, m, "Membre", a.Id, seen)
 			}
 		}
-		// Recherche par Date Création
 		if strings.Contains(strconv.Itoa(a.CreationDate), query) {
-			addResult(&results, "Créé en "+strconv.Itoa(a.CreationDate), "creation date", a.Id, seen)
+			addResult(&results, "Créé en "+strconv.Itoa(a.CreationDate), "Date Création", a.Id, seen)
 		}
-		// Recherche par 1er Album
 		if strings.Contains(strings.ToLower(a.FirstAlbum), query) {
-			addResult(&results, "1er Album: "+a.FirstAlbum, "first album", a.Id, seen)
+			addResult(&results, "Album: "+a.FirstAlbum, "1er Album", a.Id, seen)
 		}
 	}
 
-	// Recherche par Lieux (via Relations)
 	for _, rel := range relations {
 		for loc := range rel.DatesLocations {
 			cleanLoc := strings.ReplaceAll(strings.ReplaceAll(loc, "-", " "), "_", " ")
 			if strings.Contains(strings.ToLower(cleanLoc), query) {
-				// Retrouver le nom de l'artiste
-				artName := "Artiste"
+				artName := "Inconnu"
 				for _, a := range artists {
 					if a.Id == rel.Id {
 						artName = a.Name
 						break
 					}
 				}
-				addResult(&results, cleanLoc+" ("+artName+")", "location", rel.Id, seen)
+				addResult(&results, cleanLoc+" ("+artName+")", "Lieu", rel.Id, seen)
 			}
 		}
 	}
@@ -252,7 +240,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		http.Error(w, "Erreur template index", 500)
+		http.Error(w, "Erreur template index: "+err.Error(), 500)
 		return
 	}
 	tmpl.Execute(w, data)
@@ -271,7 +259,6 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Chercher relations dans cache ou API
 	var rel Relations
 	found := false
 	for _, rl := range allRelations {
@@ -283,6 +270,7 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	mutex.Unlock()
 
+	// Fallback appel API individuel si pas trouvé dans le cache
 	if !found && id < 100 {
 		rel, _ = getRelation(id)
 	}
@@ -296,7 +284,7 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-// --- UTILITAIRES & DONNÉES ---
+// --- UTILITAIRES ---
 
 func extractYear(d string) int {
 	parts := strings.Split(d, "-")
@@ -340,7 +328,7 @@ func getRelation(id int) (Relations, error) {
 	return r, nil
 }
 
-// TES IMAGES LOCALES
+// TES ARTISTES PERSO (J'ai ajouté Deftones)
 func getCustomArtists() []Artist {
 	return []Artist{
 		{Id: 101, Name: "Aphex Twin", Image: "/static/img/aphex.jpg", CreationDate: 1985, FirstAlbum: "01-01-1992", Members: []string{"Richard D. James"}},
@@ -353,7 +341,6 @@ func getCustomArtists() []Artist {
 		{Id: 108, Name: "Snow Strippers", Image: "/static/img/snow.jpg", CreationDate: 2021, FirstAlbum: "01-01-2022", Members: []string{"Tatiana Schwaninger", "Graham Perez"}},
 		{Id: 109, Name: "Venetian Snares", Image: "/static/img/venetian.jpg", CreationDate: 1992, FirstAlbum: "01-01-1998", Members: []string{"Aaron Funk"}},
 		{Id: 110, Name: "Boards of Canada", Image: "/static/img/boc.jpg", CreationDate: 1986, FirstAlbum: "01-01-1998", Members: []string{"Mike Sandison", "Marcus Sandison"}},
-		// AJOUTÉ SELON TA CAPTURE D'ÉCRAN :
 		{Id: 111, Name: "Deftones", Image: "/static/img/deftones.jpg", CreationDate: 1988, FirstAlbum: "03-10-1995", Members: []string{"Chino Moreno", "Stephen Carpenter", "Abe Cunningham"}},
 	}
 }
