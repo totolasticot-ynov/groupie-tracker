@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-// --- STRUCTURES ---
+// --- STRUCTURES DE DONNÉES  ---
 
 type Artist struct {
 	Id           int      `json:"id"`
@@ -26,7 +26,7 @@ type Relations struct {
 	DatesLocations map[string][]string `json:"datesLocations"`
 }
 
-// Structure pour l'API "index" des relations (toutes les relations d'un coup)
+// Pour charger toutes les relations d'un coup (Optimisation Recherche)
 type RelationsIndex struct {
 	Index []Relations `json:"index"`
 }
@@ -48,11 +48,11 @@ type ArtistPageData struct {
 	Relations Relations
 }
 
-// Structure des résultats de recherche pour le JSON
+// Structure JSON pour la barre de recherche
 type SearchResult struct {
-	Text     string `json:"text"`     // Le texte affiché (ex: "Phil Collins")
-	Type     string `json:"type"`     // Le type (ex: "member")
-	ArtistId int    `json:"artistId"` // Pour la redirection
+	Text     string `json:"text"`
+	Type     string `json:"type"`
+	ArtistId int    `json:"artistId"`
 }
 
 // --- VARIABLES GLOBALES (CACHE) ---
@@ -65,46 +65,53 @@ var (
 // --- MAIN ---
 
 func main() {
-	// Chargement initial des données pour la recherche
+	// Chargement des données au démarrage pour la recherche rapide [cite: 3]
 	log.Println("Chargement des données API...")
 	loadData()
 
+	// Servir les fichiers statiques (Images, JS)
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/artist", artistHandler)
-	http.HandleFunc("/search", searchHandler) // Nouvelle route pour la barre de recherche
+	// Routes (Client-Server interactions) [cite: 12]
+	http.HandleFunc("/", indexHandler)        // Accueil + Filtres
+	http.HandleFunc("/artist", artistHandler) // Page Détail + Carte
+	http.HandleFunc("/search", searchHandler) // API Recherche JSON
 
 	log.Println("✅ Serveur démarré sur http://localhost:8080")
+	// Gestion des erreurs serveur
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 // --- LOGIQUE DE CHARGEMENT ---
+
 func loadData() {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// 1. Récupérer les artistes
-	apiArtists, _ := getArtists()
+	// 1. Récupérer les artistes (API + Custom)
+	apiArtists, err := getArtists()
+	if err != nil {
+		log.Println("Erreur API Artistes:", err)
+	}
+
 	myArtists := getCustomArtists()
 	allArtists = append(myArtists, apiArtists...)
 
-	// 2. Récupérer TOUTES les relations (pour la recherche par lieu)
-	// Note: Pour tes artistes persos, on simule, pour l'API on fetch tout l'index
+	// 2. Récupérer l'index des relations (API)
 	apiRelIndex, err := getAllRelationsIndex()
 	if err == nil {
 		allRelations = apiRelIndex.Index
 	} else {
-		log.Println("Erreur chargement relations API:", err)
+		log.Println("Erreur API Relations:", err)
 	}
 
-	// Ajout des relations pour tes artistes persos (simulées pour la recherche)
+	// Ajouter des relations fictives pour tes artistes persos (pour la démo)
 	for _, art := range myArtists {
 		allRelations = append(allRelations, Relations{
 			Id: art.Id,
 			DatesLocations: map[string][]string{
-				"london-uk": {"01-01-2024"}, "paris-france": {"05-01-2024"},
+				"london-uk": {"01-01-2024"}, "paris-france": {"05-01-2024"}, "tokyo-japan": {"10-01-2024"},
 			},
 		})
 	}
@@ -112,6 +119,7 @@ func loadData() {
 
 // --- HANDLERS ---
 
+// Gère la recherche dynamique (AJAX) [cite: 14]
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := strings.ToLower(r.URL.Query().Get("q"))
 	results := []SearchResult{}
@@ -121,55 +129,48 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mutex.Lock() // Lecture sûre des variables globales
+	mutex.Lock()
 	artists := allArtists
 	relations := allRelations
 	mutex.Unlock()
 
-	// Map pour éviter les doublons exacts
-	seen := make(map[string]bool)
+	seen := make(map[string]bool) // Pour éviter les doublons
 
 	for _, a := range artists {
-		// 1. Recherche par NOM (Artist/Band)
+		// Recherche par Nom
 		if strings.Contains(strings.ToLower(a.Name), query) {
 			addResult(&results, a.Name, "artist/band", a.Id, seen)
 		}
-
-		// 2. Recherche par MEMBRE
+		// Recherche par Membres
 		for _, m := range a.Members {
 			if strings.Contains(strings.ToLower(m), query) {
 				addResult(&results, m, "member", a.Id, seen)
 			}
 		}
-
-		// 3. Recherche par DATE CREATION
+		// Recherche par Date Création
 		if strings.Contains(strconv.Itoa(a.CreationDate), query) {
 			addResult(&results, "Créé en "+strconv.Itoa(a.CreationDate), "creation date", a.Id, seen)
 		}
-
-		// 4. Recherche par PREMIER ALBUM
+		// Recherche par 1er Album
 		if strings.Contains(strings.ToLower(a.FirstAlbum), query) {
 			addResult(&results, "1er Album: "+a.FirstAlbum, "first album", a.Id, seen)
 		}
 	}
 
-	// 5. Recherche par LOCATION
-	// On doit lier l'ID de la relation à l'artiste
+	// Recherche par Lieux (via Relations)
 	for _, rel := range relations {
 		for loc := range rel.DatesLocations {
 			cleanLoc := strings.ReplaceAll(strings.ReplaceAll(loc, "-", " "), "_", " ")
 			if strings.Contains(strings.ToLower(cleanLoc), query) {
-				// Trouver le nom de l'artiste correspondant à cet ID
-				artistName := "Inconnu"
+				// Retrouver le nom de l'artiste
+				artName := "Artiste"
 				for _, a := range artists {
 					if a.Id == rel.Id {
-						artistName = a.Name
+						artName = a.Name
 						break
 					}
 				}
-				// Affichage: "Paris, France (Queen)"
-				text := cleanLoc + " (" + artistName + ")"
-				addResult(&results, text, "location", rel.Id, seen)
+				addResult(&results, cleanLoc+" ("+artName+")", "location", rel.Id, seen)
 			}
 		}
 	}
@@ -178,11 +179,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(results)
 }
 
-func addResult(results *[]SearchResult, text, typeStr string, id int, seen map[string]bool) {
-	// Clé unique pour éviter les doublons dans l'affichage
-	key := text + typeStr + strconv.Itoa(id)
+func addResult(res *[]SearchResult, txt, typ string, id int, seen map[string]bool) {
+	key := txt + typ + strconv.Itoa(id)
 	if !seen[key] {
-		*results = append(*results, SearchResult{Text: text, Type: typeStr, ArtistId: id})
+		*res = append(*res, SearchResult{Text: txt, Type: typ, ArtistId: id})
 		seen[key] = true
 	}
 }
@@ -193,46 +193,45 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Utilisation des données en cache + filtres dynamiques
 	mutex.Lock()
 	currentArtists := allArtists
 	mutex.Unlock()
 
-	filteredArtists := []Artist{}
-
-	minCreation, _ := strconv.Atoi(r.URL.Query().Get("minCreation"))
-	maxCreation, _ := strconv.Atoi(r.URL.Query().Get("maxCreation"))
-	minAlbum, _ := strconv.Atoi(r.URL.Query().Get("minAlbum"))
-	maxAlbum, _ := strconv.Atoi(r.URL.Query().Get("maxAlbum"))
+	// Filtres
+	filtered := []Artist{}
+	minC, _ := strconv.Atoi(r.URL.Query().Get("minCreation"))
+	maxC, _ := strconv.Atoi(r.URL.Query().Get("maxCreation"))
+	minA, _ := strconv.Atoi(r.URL.Query().Get("minAlbum"))
+	maxA, _ := strconv.Atoi(r.URL.Query().Get("maxAlbum"))
 	members := r.URL.Query()["members"]
 
-	if minCreation == 0 {
-		minCreation = 1950
+	if minC == 0 {
+		minC = 1950
 	}
-	if maxCreation == 0 {
-		maxCreation = 2025
+	if maxC == 0 {
+		maxC = 2025
 	}
-	if minAlbum == 0 {
-		minAlbum = 1950
+	if minA == 0 {
+		minA = 1950
 	}
-	if maxAlbum == 0 {
-		maxAlbum = 2025
+	if maxA == 0 {
+		maxA = 2025
 	}
 
 	for _, a := range currentArtists {
 		keep := true
-		if a.CreationDate < minCreation || a.CreationDate > maxCreation {
+		if a.CreationDate < minC || a.CreationDate > maxC {
 			keep = false
 		}
-		albYear := extractYear(a.FirstAlbum)
-		if albYear < minAlbum || albYear > maxAlbum {
+		y := extractYear(a.FirstAlbum)
+		if y < minA || y > maxA {
 			keep = false
 		}
 		if len(members) > 0 {
-			nbStr := strconv.Itoa(len(a.Members))
+			nb := strconv.Itoa(len(a.Members))
 			found := false
 			for _, m := range members {
-				if m == nbStr {
+				if m == nb {
 					found = true
 					break
 				}
@@ -242,18 +241,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if keep {
-			filteredArtists = append(filteredArtists, a)
+			filtered = append(filtered, a)
 		}
 	}
 
 	data := PageData{
-		Artists: filteredArtists,
-		Filters: FilterData{MinCreation: minCreation, MaxCreation: maxCreation, MinAlbum: minAlbum, MaxAlbum: maxAlbum},
+		Artists: filtered,
+		Filters: FilterData{MinCreation: minC, MaxCreation: maxC, MinAlbum: minA, MaxAlbum: maxA},
 	}
 
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		http.Error(w, "Erreur: templates/index.html introuvable", 500)
+		http.Error(w, "Erreur template index", 500)
 		return
 	}
 	tmpl.Execute(w, data)
@@ -271,41 +270,39 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	// Récupérer la relation spécifique (depuis le cache ou l'API si besoin, ici on simplifie en cherchant dans le cache)
+
+	// Chercher relations dans cache ou API
 	var rel Relations
-	foundRel := false
-	for _, r := range allRelations {
-		if r.Id == id {
-			rel = r
-			foundRel = true
+	found := false
+	for _, rl := range allRelations {
+		if rl.Id == id {
+			rel = rl
+			found = true
 			break
 		}
 	}
 	mutex.Unlock()
 
-	if !foundRel {
-		// Fallback si pas trouvé dans le cache (ex: appel direct)
-		if id < 100 {
-			rel, _ = getRelation(id)
-		}
+	if !found && id < 100 {
+		rel, _ = getRelation(id)
 	}
 
 	data := ArtistPageData{Artist: selected, Relations: rel}
 	tmpl, err := template.ParseFiles("templates/artist.html")
 	if err != nil {
-		http.Error(w, "Erreur: templates/artist.html introuvable", 500)
+		http.Error(w, "Erreur template artist", 500)
 		return
 	}
 	tmpl.Execute(w, data)
 }
 
-// --- DATA & API ---
+// --- UTILITAIRES & DONNÉES ---
 
-func extractYear(date string) int {
-	parts := strings.Split(date, "-")
+func extractYear(d string) int {
+	parts := strings.Split(d, "-")
 	if len(parts) == 3 {
-		y, _ := strconv.Atoi(parts[2])
-		return y
+		v, _ := strconv.Atoi(parts[2])
+		return v
 	}
 	return 2000
 }
@@ -316,25 +313,9 @@ func getAllRelationsIndex() (RelationsIndex, error) {
 		return RelationsIndex{}, err
 	}
 	defer resp.Body.Close()
-	var index RelationsIndex
-	json.NewDecoder(resp.Body).Decode(&index)
-	return index, nil
-}
-
-func getCustomArtists() []Artist {
-	return []Artist{
-		{Id: 101, Name: "Aphex Twin", Image: "/static/img/aphex.jpg", CreationDate: 1985, FirstAlbum: "01-01-1992", Members: []string{"Richard"}},
-		{Id: 102, Name: "Crystal Castles", Image: "/static/img/crystal.jpg", CreationDate: 2003, FirstAlbum: "18-03-2008", Members: []string{"Ethan", "Alice"}},
-		{Id: 103, Name: "Ennio Morricone", Image: "/static/img/ennio.jpg", CreationDate: 1946, FirstAlbum: "01-01-1961", Members: []string{"Ennio"}},
-		{Id: 104, Name: "Rihanna", Image: "/static/img/rihanna.jpg", CreationDate: 2003, FirstAlbum: "30-08-2005", Members: []string{"Rihanna"}},
-		{Id: 105, Name: "Daft Punk", Image: "/static/img/daftpunk.jpg", CreationDate: 1993, FirstAlbum: "20-01-1997", Members: []string{"Thomas", "Guy-Manuel"}},
-		{Id: 106, Name: "TV Girl", Image: "/static/img/tvgirl.jpg", CreationDate: 2010, FirstAlbum: "01-01-2014", Members: []string{"Brad", "Jason", "Wyatt"}},
-		{Id: 107, Name: "Björk", Image: "/static/img/bjork.jpg", CreationDate: 1977, FirstAlbum: "05-07-1993", Members: []string{"Björk"}},
-		{Id: 108, Name: "Snow Strippers", Image: "/static/img/snow.jpg", CreationDate: 2021, FirstAlbum: "01-01-2022", Members: []string{"Tatiana", "Graham"}},
-		{Id: 109, Name: "Venetian Snares", Image: "/static/img/venetian.jpg", CreationDate: 1992, FirstAlbum: "01-01-1998", Members: []string{"Aaron"}},
-		{Id: 110, Name: "Boards of Canada", Image: "/static/img/boc.jpg", CreationDate: 1986, FirstAlbum: "01-01-1998", Members: []string{"Mike", "Marcus"}},
-		{Id: 111, Name: "Deftones", Image: "/static/img/deftones.jpg", CreationDate: 1988, FirstAlbum: "03-10-1995", Members: []string{"Chino", "Stephen", "Abe", "Frank"}},
-	}
+	var idx RelationsIndex
+	json.NewDecoder(resp.Body).Decode(&idx)
+	return idx, nil
 }
 
 func getArtists() ([]Artist, error) {
@@ -343,9 +324,9 @@ func getArtists() ([]Artist, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var artists []Artist
-	json.NewDecoder(resp.Body).Decode(&artists)
-	return artists, nil
+	var arr []Artist
+	json.NewDecoder(resp.Body).Decode(&arr)
+	return arr, nil
 }
 
 func getRelation(id int) (Relations, error) {
@@ -354,7 +335,25 @@ func getRelation(id int) (Relations, error) {
 		return Relations{}, err
 	}
 	defer resp.Body.Close()
-	var res Relations
-	json.NewDecoder(resp.Body).Decode(&res)
-	return res, nil
+	var r Relations
+	json.NewDecoder(resp.Body).Decode(&r)
+	return r, nil
+}
+
+// TES IMAGES LOCALES
+func getCustomArtists() []Artist {
+	return []Artist{
+		{Id: 101, Name: "Aphex Twin", Image: "/static/img/aphex.jpg", CreationDate: 1985, FirstAlbum: "01-01-1992", Members: []string{"Richard D. James"}},
+		{Id: 102, Name: "Crystal Castles", Image: "/static/img/crystal.jpg", CreationDate: 2003, FirstAlbum: "18-03-2008", Members: []string{"Ethan Kath", "Alice Glass"}},
+		{Id: 103, Name: "Ennio Morricone", Image: "/static/img/ennio.jpg", CreationDate: 1946, FirstAlbum: "01-01-1961", Members: []string{"Ennio Morricone"}},
+		{Id: 104, Name: "Rihanna", Image: "/static/img/rihanna.jpg", CreationDate: 2003, FirstAlbum: "30-08-2005", Members: []string{"Rihanna"}},
+		{Id: 105, Name: "Daft Punk", Image: "/static/img/daftpunk.jpg", CreationDate: 1993, FirstAlbum: "20-01-1997", Members: []string{"Thomas Bangalter", "Guy-Manuel de Homem-Christo"}},
+		{Id: 106, Name: "TV Girl", Image: "/static/img/tvgirl.jpg", CreationDate: 2010, FirstAlbum: "01-01-2014", Members: []string{"Brad Petering", "Jason Wyman", "Wyatt Harmon"}},
+		{Id: 107, Name: "Björk", Image: "/static/img/bjork.jpg", CreationDate: 1977, FirstAlbum: "05-07-1993", Members: []string{"Björk Guðmundsdóttir"}},
+		{Id: 108, Name: "Snow Strippers", Image: "/static/img/snow.jpg", CreationDate: 2021, FirstAlbum: "01-01-2022", Members: []string{"Tatiana Schwaninger", "Graham Perez"}},
+		{Id: 109, Name: "Venetian Snares", Image: "/static/img/venetian.jpg", CreationDate: 1992, FirstAlbum: "01-01-1998", Members: []string{"Aaron Funk"}},
+		{Id: 110, Name: "Boards of Canada", Image: "/static/img/boc.jpg", CreationDate: 1986, FirstAlbum: "01-01-1998", Members: []string{"Mike Sandison", "Marcus Sandison"}},
+		// AJOUTÉ SELON TA CAPTURE D'ÉCRAN :
+		{Id: 111, Name: "Deftones", Image: "/static/img/deftones.jpg", CreationDate: 1988, FirstAlbum: "03-10-1995", Members: []string{"Chino Moreno", "Stephen Carpenter", "Abe Cunningham"}},
+	}
 }
