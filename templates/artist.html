@@ -6,75 +6,45 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #1db954; }
+        :root { --bg: #121212; --card: #181818; --accent: #1db954; }
         
-        body {
-            font-family: 'Inter', sans-serif; background-color: var(--bg); color: #fff;
-            margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh;
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1200px; background: var(--card); border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); overflow: hidden; position: relative; }
 
-        .container {
-            width: 100%; max-width: 1200px; background: var(--card);
-            min-height: 100vh; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-
-        /* HEADER IMMERSIF */
-        .header {
-            height: 400px; position: relative; display: flex; align-items: flex-end; padding: 40px;
-            background: url('{{.Artist.Image}}') no-repeat center center/cover;
-        }
-        .header::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, rgba(18,18,18,0.2) 0%, rgba(30,30,30,1) 100%);
-        }
-
+        /* HEADER */
+        .header { height: 400px; position: relative; display: flex; align-items: flex-end; padding: 40px; background: url('{{.Artist.Image}}') center/cover; }
+        .header::after { content: ''; position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(to bottom, transparent 0%, var(--card) 100%); }
         .header-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 30px; animation: slideUp 0.8s ease; }
-        
-        .avatar {
-            width: 200px; height: 200px; border-radius: 50%; object-fit: cover;
-            border: 5px solid var(--card); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
+        .avatar { width: 200px; height: 200px; border-radius: 50%; border: 5px solid var(--card); box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: cover; }
         h1 { font-size: 4rem; margin: 0; line-height: 1; letter-spacing: -2px; }
-        .subtitle { font-size: 1.2rem; color: #ccc; margin-top: 10px; display: flex; gap: 15px; }
-        .badge { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; backdrop-filter: blur(5px); }
-
-        /* BOUTON RETOUR FLOTTANT */
-        .back-btn {
-            position: absolute; top: 30px; left: 30px; z-index: 10;
-            background: rgba(0,0,0,0.5); color: white; padding: 12px 25px;
-            border-radius: 30px; text-decoration: none; font-weight: bold;
-            backdrop-filter: blur(5px); transition: 0.3s; border: 1px solid rgba(255,255,255,0.2);
-        }
-        .back-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
-
-        /* LAYOUT */
-        .content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; padding: 40px; }
         
+        .back-btn { position: absolute; top: 30px; left: 30px; z-index: 10; background: rgba(0,0,0,0.6); color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; backdrop-filter: blur(5px); transition: 0.3s; }
+        .back-btn:hover { background: var(--accent); color: black; }
+
+        .content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; padding: 40px; }
         h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; color: var(--accent); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 2px; }
 
-        /* LISTE DATES */
+        /* LISTE CORRIGÉE */
         .concert-list { list-style: none; padding: 0; max-height: 600px; overflow-y: auto; }
-        .concert-item {
-            background: #252525; margin-bottom: 15px; padding: 20px; border-radius: 12px;
-            border-left: 4px solid transparent; transition: 0.3s; cursor: default;
-            animation: fadeInItem 0.5s ease forwards; opacity: 0;
-        }
+        .concert-item { background: #252525; margin-bottom: 15px; padding: 20px; border-radius: 12px; border-left: 4px solid transparent; transition: 0.3s; opacity: 0; animation: fadeInItem 0.5s ease forwards; }
+        
+        /* Délais d'animation génériques (sans variable buggée) */
+        .concert-item:nth-child(1) { animation-delay: 0.1s; }
+        .concert-item:nth-child(2) { animation-delay: 0.2s; }
+        .concert-item:nth-child(3) { animation-delay: 0.3s; }
+        .concert-item:nth-child(n+4) { animation-delay: 0.4s; }
+
         .concert-item:hover { background: #333; border-left-color: var(--accent); transform: translateX(5px); }
         .city { font-size: 1.1rem; font-weight: bold; color: #fff; text-transform: capitalize; }
         .dates span { display: inline-block; background: #121212; color: #aaa; padding: 5px 10px; border-radius: 5px; margin: 5px 5px 0 0; font-size: 0.85rem; }
 
-        /* CARTE */
         #map { height: 600px; width: 100%; border-radius: 20px; opacity: 0; animation: fadeIn 1s 0.5s forwards; }
         .loading { text-align: center; color: #666; font-style: italic; margin-top: 10px; }
+        .no-data { background: #222; padding: 20px; border-radius: 10px; text-align: center; color: #777; font-style: italic; }
 
         @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes fadeInItem { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -86,9 +56,8 @@
                 <img src="{{.Artist.Image}}" class="avatar">
                 <div>
                     <h1>{{.Artist.Name}}</h1>
-                    <div class="subtitle">
-                        <span class="badge">Créé en {{.Artist.CreationDate}}</span>
-                        <span class="badge">1er Album : {{.Artist.FirstAlbum}}</span>
+                    <div style="margin-top: 10px; color:#ccc;">
+                        <span>Créé en {{.Artist.CreationDate}}</span> • <span>1er Album : {{.Artist.FirstAlbum}}</span>
                     </div>
                     <div style="margin-top: 15px;">
                         {{ range .Artist.Members }}<span style="color:#aaa; margin-right: 10px; font-size: 0.9rem;">#{{.}}</span>{{ end }}
@@ -100,22 +69,24 @@
         <div class="content">
             <div>
                 <h2>Concerts à venir</h2>
-                <ul class="concert-list">
-                    {{ range $i, $val := .Relations.DatesLocations }}
-                    <li class="concert-item" style="animation-delay: 0.{{$i}}s">
-                            <div class="city">{{ $i }}</div>
-                            <div class="dates">
-                                {{ range $val }}<span>{{ . }}</span>{{ end }}
-                            </div>
-                        </li>
-                    {{ end }}
-                </ul>
+                {{ if .Relations.DatesLocations }}
+                    <ul class="concert-list">
+                        {{ range $key, $val := .Relations.DatesLocations }}
+                            <li class="concert-item">
+                                <div class="city">{{ $key }}</div>
+                                <div class="dates">{{ range $val }}<span>{{ . }}</span>{{ end }}</div>
+                            </li>
+                        {{ end }}
+                    </ul>
+                {{ else }}
+                    <div class="no-data">Aucune date disponible pour le moment.</div>
+                {{ end }}
             </div>
             
             <div>
                 <h2>Carte Mondiale</h2>
                 <div id="map"></div>
-                <p class="loading" id="status">Chargement des coordonnées...</p>
+                <p class="loading" id="status">Chargement...</p>
             </div>
         </div>
     </div>
@@ -131,9 +102,11 @@
         const statusText = document.getElementById('status');
         
         async function pinLocations() {
+            if(locations.length === 0) { statusText.innerText = "Pas de données."; return; }
+            
             for (let loc of locations) {
                 let query = loc.replace(/-/g, ', ').replace(/_/g, ' ');
-                statusText.innerText = "Recherche : " + query + "...";
+                statusText.innerText = "Recherche : " + query;
                 try {
                     let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
                     let data = await res.json();
@@ -141,9 +114,9 @@
                         L.marker([data[0].lat, data[0].lon]).addTo(map).bindPopup(`<strong style="text-transform:capitalize">${query}</strong>`);
                     }
                 } catch(e) {}
-                await new Promise(r => setTimeout(r, 800)); // Pause pour l'API
+                await new Promise(r => setTimeout(r, 800));
             }
-            statusText.innerText = "Terminé.";
+            statusText.innerText = "";
         }
         pinLocations();
     </script>

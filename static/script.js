@@ -1,40 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("search-input");
-    const suggestionsBox = document.getElementById("suggestions-box");
+    const input = document.getElementById("search-input");
+    const box = document.getElementById("suggestions");
 
-    if (searchInput) {
-        searchInput.addEventListener("input", async (e) => {
-            const query = e.target.value.trim();
-            if (query.length < 1) { suggestionsBox.style.display = "none"; return; }
+    if (input) {
+        input.addEventListener("input", async (e) => {
+            const q = e.target.value.trim();
+            if (q.length < 1) { box.style.display = "none"; return; }
 
             try {
-                const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-                const results = await response.json();
+                const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                box.innerHTML = "";
                 
-                suggestionsBox.innerHTML = "";
-                
-                if (results.length > 0) {
-                    suggestionsBox.style.display = "block";
-                    results.forEach(item => {
+                if (data.length > 0) {
+                    box.style.display = "block";
+                    data.forEach(item => {
                         const div = document.createElement("div");
-                        div.className = "suggestion-item";
-                        // Affichage Type en couleur Accent
-                        div.innerHTML = `
-                            <span style="font-weight:600; color:white;">${item.text}</span> 
-                            <span style="color:#1db954; font-size:0.75em; border:1px solid #1db954; padding:2px 6px; border-radius:4px;">${item.type}</span>
-                        `;
-                        div.addEventListener("click", () => window.location.href = `/artist?id=${item.artistId}`);
-                        suggestionsBox.appendChild(div);
+                        div.className = "sugg-item";
+                        div.innerHTML = `<span>${item.text}</span> <span class="sugg-tag">${item.type}</span>`;
+                        div.onclick = () => window.location.href = `/artist?id=${item.artistId}`;
+                        box.appendChild(div);
                     });
-                } else { suggestionsBox.style.display = "none"; }
-            } catch (error) { console.error(error); }
+                } else { box.style.display = "none"; }
+            } catch (e) { console.error(e); }
         });
 
-        // Fermer si on clique ailleurs
         document.addEventListener("click", (e) => {
-            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                suggestionsBox.style.display = "none";
-            }
+            if (!input.contains(e.target) && !box.contains(e.target)) box.style.display = "none";
         });
     }
 });

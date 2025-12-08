@@ -2,154 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Groupie Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* --- DESIGN GLOBAL --- */
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --primary: #1db954; /* Vert style Spotify, ou change pour #e91e63 (Rose) */
-            --text-color: #ffffff;
-            --text-muted: #b3b3b3;
-        }
-
+        :root { --bg: #121212; --card: #181818; --accent: #1db954; --text: #fff; --hover: #282828; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 40px 20px;
-            opacity: 0; animation: fadeIn 0.8s forwards; /* Animation d'entrée */
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; animation: fadeIn 0.8s; }
+        h1 { text-align: center; margin-bottom: 40px; font-size: 3.5rem; letter-spacing: -2px; color: var(--accent); }
 
-        h1 { text-align: center; margin-bottom: 40px; font-size: 3.5rem; letter-spacing: -1px; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        /* --- SEARCH BAR ANIMÉE --- */
-        .search-container { max-width: 600px; margin: 0 auto 40px; position: relative; z-index: 10; }
+        /* SEARCH BAR */
+        .search-box { max-width: 600px; margin: 0 auto 40px; position: relative; z-index: 100; }
+        #search-input { width: 100%; padding: 18px 25px; border-radius: 50px; background: #000; border: 2px solid #333; color: white; font-size: 1.1rem; outline: none; transition: 0.3s; }
+        #search-input:focus { border-color: var(--accent); box-shadow: 0 0 20px rgba(29, 185, 84, 0.3); }
         
-        #search-input {
-            width: 100%; padding: 18px 25px; border-radius: 50px;
-            border: 2px solid #333; background: #000; color: white;
-            font-size: 1.1rem; outline: none; transition: all 0.3s ease;
-        }
-        #search-input:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(29, 185, 84, 0.3); transform: scale(1.02); }
+        #suggestions { position: absolute; top: 65px; width: 100%; background: #222; border-radius: 15px; overflow: hidden; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .sugg-item { padding: 15px 25px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .sugg-item:hover { background: #333; }
+        .sugg-tag { font-size: 0.75rem; border: 1px solid var(--accent); color: var(--accent); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
 
-        #suggestions-box {
-            position: absolute; top: 65px; width: 100%; background: #282828;
-            border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none; animation: slideDown 0.2s ease;
-        }
-        .suggestion-item {
-            padding: 15px 25px; cursor: pointer; display: flex; justify-content: space-between;
-            border-bottom: 1px solid #333; transition: background 0.2s;
-        }
-        .suggestion-item:hover { background: #3e3e3e; padding-left: 30px; } /* Petit décalage au survol */
-        .suggestion-type { color: var(--primary); font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-
-        /* --- FILTRES STYLÉS --- */
-        .filters-container {
-            background: var(--card-bg); padding: 30px; border-radius: 20px;
-            max-width: 1000px; margin: 0 auto 50px;
-            border: 1px solid #333; transition: transform 0.3s;
-        }
-        .filters-container:hover { border-color: #444; }
-
-        .filter-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-bottom: 25px; }
-        .filter-group h3 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px; text-align: center; letter-spacing: 1px; }
-
-        input[type="number"] {
-            background: #333; border: none; color: white; padding: 10px; border-radius: 8px; width: 80px; text-align: center; font-weight: bold;
-        }
+        /* FILTERS */
+        .filters { background: var(--card); padding: 30px; border-radius: 20px; max-width: 1000px; margin: 0 auto 50px; border: 1px solid #333; }
+        .f-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .f-group h3 { color: #888; font-size: 0.8rem; text-transform: uppercase; text-align: center; margin-bottom: 10px; }
+        input[type="number"] { background: #333; border: none; color: white; padding: 8px; border-radius: 5px; width: 80px; text-align: center; }
         
-        /* Bouton Animé */
-        button {
-            background: var(--primary); color: #000; border: none; padding: 15px 40px;
-            border-radius: 50px; font-weight: 800; font-size: 1rem; cursor: pointer;
-            transition: all 0.2s; text-transform: uppercase;
-        }
-        button:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(29, 185, 84, 0.5); }
-        button:active { transform: scale(0.95); }
+        button { background: var(--accent); color: #000; border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; }
+        button:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent); }
 
-        .reset-link { color: var(--text-muted); text-decoration: none; margin-left: 15px; font-size: 0.9rem; transition: color 0.2s; }
-        .reset-link:hover { color: white; text-decoration: underline; }
-
-        /* --- GRILLE CARTES --- */
-        .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 30px; max-width: 1300px; margin: 0 auto;
-        }
-
-        .card-link { text-decoration: none; color: inherit; display: block; }
-        
-        .card {
-            background: var(--card-bg); border-radius: 15px; overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effet "rebond" */
-            height: 100%; position: relative; border: 1px solid transparent;
-        }
-        
-        .card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        }
-
-        .card img {
-            width: 100%; height: 220px; object-fit: cover;
-            filter: grayscale(20%); transition: filter 0.3s;
-        }
+        /* GRID */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; }
+        .card-link { text-decoration: none; color: inherit; }
+        .card { background: var(--card); border-radius: 15px; overflow: hidden; transition: 0.4s; height: 100%; position: relative; border: 1px solid transparent; }
+        .card:hover { transform: translateY(-10px); border-color: var(--accent); background: var(--hover); }
+        .card img { width: 100%; height: 220px; object-fit: cover; filter: grayscale(20%); transition: 0.4s; }
         .card:hover img { filter: grayscale(0%); }
+        .info { padding: 20px; text-align: center; }
+        .info h3 { font-size: 1.1rem; margin-bottom: 5px; font-weight: 700; }
+        .info p { color: #888; font-size: 0.9rem; }
 
-        .card-info { padding: 20px; text-align: center; }
-        .card-info h3 { font-size: 1.2rem; margin-bottom: 5px; font-weight: 700; }
-        .card-info p { color: var(--text-muted); font-size: 0.9rem; }
-
-        /* --- ANIMATIONS KEYFRAMES --- */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
-
     <h1>Groupie Tracker</h1>
 
-    <div class="search-container">
-        <input type="text" id="search-input" placeholder="Rechercher un artiste, un lieu, une date...">
-        <div id="suggestions-box"></div>
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Rechercher un artiste, lieu, date...">
+        <div id="suggestions"></div>
     </div>
 
-    <div class="filters-container">
+    <div class="filters">
         <form action="/" method="GET">
-            <div class="filter-row">
-                <div class="filter-group">
+            <div class="f-row">
+                <div class="f-group">
                     <h3>Année Création</h3>
-                    <input type="number" name="minCreation" placeholder="Min" value="{{.Filters.MinCreation}}">
-                    <span style="color:#555">—</span>
+                    <input type="number" name="minCreation" placeholder="Min" value="{{.Filters.MinCreation}}"> - 
                     <input type="number" name="maxCreation" placeholder="Max" value="{{.Filters.MaxCreation}}">
                 </div>
-                <div class="filter-group">
-                    <h3>Année 1er Album</h3>
-                    <input type="number" name="minAlbum" placeholder="Min" value="{{.Filters.MinAlbum}}">
-                    <span style="color:#555">—</span>
+                <div class="f-group">
+                    <h3>Année Album</h3>
+                    <input type="number" name="minAlbum" placeholder="Min" value="{{.Filters.MinAlbum}}"> - 
                     <input type="number" name="maxAlbum" placeholder="Max" value="{{.Filters.MaxAlbum}}">
                 </div>
             </div>
-            <div class="filter-group" style="text-align: center;">
-                <h3>Nombre de Membres</h3>
-                <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
-                    <label style="cursor:pointer;"><input type="checkbox" name="members" value="1"> Solo</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="members" value="2"> Duo</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="members" value="3"> Trio</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="members" value="4"> 4</label>
-                    <label style="cursor:pointer;"><input type="checkbox" name="members" value="5"> 5+</label>
-                </div>
+            <div class="f-group" style="text-align: center;">
+                <h3>Membres</h3>
+                <label><input type="checkbox" name="members" value="1"> 1</label>
+                <label><input type="checkbox" name="members" value="2"> 2</label>
+                <label><input type="checkbox" name="members" value="3"> 3</label>
+                <label><input type="checkbox" name="members" value="4"> 4</label>
+                <label><input type="checkbox" name="members" value="5"> 5+</label>
             </div>
-            <div style="text-align: center; margin-top: 30px;">
-                <button type="submit">Filtrer les résultats</button>
-                <br><br>
-                <a href="/" class="reset-link">Réinitialiser tout</a>
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="submit">Appliquer Filtres</button>
+                <a href="/" style="color: #666; margin-left: 15px; text-decoration: none; font-size: 0.9rem;">Reset</a>
             </div>
         </form>
     </div>
@@ -158,12 +85,8 @@
         {{ range .Artists }}
             <a href="/artist?id={{.Id}}" class="card-link">
                 <div class="card">
-                    {{ if .Image }}
-                        <img src="{{ .Image }}" alt="{{ .Name }}">
-                    {{ else }}
-                        <img src="https://via.placeholder.com/300x300/333/fff?text=No+Image" alt="No Image">
-                    {{ end }}
-                    <div class="card-info">
+                    {{ if .Image }}<img src="{{ .Image }}">{{ else }}<img src="https://via.placeholder.com/300">{{ end }}
+                    <div class="info">
                         <h3>{{ .Name }}</h3>
                         <p>{{ .CreationDate }}</p>
                     </div>
