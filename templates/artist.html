@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Artist.Name}} - Détails</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            width: 100%;
+            max-width: 1100px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), #1e1e1e), url('{{.Artist.Image}}');
+            background-size: cover;
+            background-position: center;
+            height: 350px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+        }
+
+        .header-content {
+            position: relative; z-index: 2;
+            display: flex; align-items: center; gap: 30px;
+        }
+
+        .artist-avatar {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            border: 5px solid #1e1e1e;
+            object-fit: cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .artist-info h1 { font-size: 3.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); }
+        .artist-info p { font-size: 1.1rem; opacity: 0.9; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; display: inline-block; }
+
+        .back-btn {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(255,255,255,0.1); color: white; text-decoration: none;
+            padding: 10px 20px; border-radius: 30px; font-weight: bold;
+            backdrop-filter: blur(5px); transition: all 0.3s; z-index: 10;
+        }
+        .back-btn:hover { background: #e91e63; }
+
+        /* GRID CONTENU */
+        .content-grid {
+            display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .header { height: 250px; }
+            .artist-info h1 { font-size: 2rem; }
+            .artist-avatar { width: 120px; height: 120px; }
+        }
+
+        h2 { border-bottom: 2px solid #e91e63; padding-bottom: 10px; margin-bottom: 20px; color: #fff; }
+
+        /* DATES */
+        .concert-list { list-style: none; max-height: 500px; overflow-y: auto; padding-right: 10px; }
+        .concert-item {
+            background: #2a2a2a; margin-bottom: 15px; padding: 15px; border-radius: 10px;
+            transition: transform 0.2s, background 0.2s; border-left: 4px solid transparent;
+        }
+        .concert-item:hover { transform: translateX(5px); background: #333; border-left: 4px solid #e91e63; }
+        .location-name { font-weight: bold; font-size: 1.1em; color: #e91e63; text-transform: capitalize; display: block; margin-bottom: 5px; }
+        .date-tags span { display: inline-block; background: #444; font-size: 0.85em; padding: 4px 8px; border-radius: 4px; margin-right: 5px; margin-top: 5px; }
+
+        /* MAP */
+        #map { height: 500px; width: 100%; border-radius: 15px; z-index: 1; }
+        .loading-text { text-align: center; font-style: italic; color: #888; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/" class="back-btn">← Retour</a>
+        
+        <div class="header">
+            <div class="header-content">
+                <img src="{{.Artist.Image}}" class="artist-avatar" alt="{{.Artist.Name}}">
+                <div class="artist-info">
+                    <h1>{{.Artist.Name}}</h1>
+                    <p>Création : {{.Artist.CreationDate}} • 1er Album : {{.Artist.FirstAlbum}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="dates-section">
+                <h2>Concerts</h2>
+                <ul class="concert-list">
+                    {{ range $key, $val := .Relations.DatesLocations }}
+                        <li class="concert-item">
+                            <span class="location-name">{{ $key }}</span>
+                            <div class="date-tags">
+                                {{ range $val }} <span>{{ . }}</span> {{ end }}
+                            </div>
+                        </li>
+                    {{ end }}
+                </ul>
+            </div>
+
+            <div class="map-section">
+                <h2>Localisation</h2>
+                <div id="map"></div>
+                <p id="status" class="loading-text">Chargement des points...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+
+        var locations = [];
+        {{ range $key, $val := .Relations.DatesLocations }}
+            locations.push("{{ $key }}");
+        {{ end }}
+
+        const statusText = document.getElementById('status');
+
+        async function pinLocations() {
+            for (let i = 0; i < locations.length; i++) {
+                let loc = locations[i];
+                let query = loc.replace(/-/g, ', ').replace(/_/g, ' ');
+
+                try {
+                    statusText.innerText = `Recherche : ${query}...`;
+                    let response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+                    let data = await response.json();
+
+                    if (data.length > 0) {
+                        let popup = `<strong style="text-transform:capitalize">${query}</strong>`;
+                        L.marker([data[0].lat, data[0].lon]).addTo(map).bindPopup(popup);
+                    }
+                } catch (error) { console.error(error); }
+
+                await new Promise(r => setTimeout(r, 700));
+            }
+            statusText.innerText = `Terminé.`;
+        }
+
+        pinLocations();
+    </script>
+</body>
+</html>

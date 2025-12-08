@@ -9,14 +9,15 @@ import (
 	"strings"
 )
 
-// Mise à jour de la structure pour inclure les données nécessaires aux filtres
+// --- STRUCTURES DE DONNÉES ---
+
 type Artist struct {
 	Id           int      `json:"id"`
 	Name         string   `json:"name"`
 	Image        string   `json:"image"`
-	CreationDate int      `json:"creationDate"` // Année de création
-	FirstAlbum   string   `json:"firstAlbum"`   // Date premier album (ex: "14-02-1999")
-	Members      []string `json:"members"`      // Liste des membres
+	CreationDate int      `json:"creationDate"`
+	FirstAlbum   string   `json:"firstAlbum"`
+	Members      []string `json:"members"`
 }
 
 type Relations struct {
@@ -25,12 +26,10 @@ type Relations struct {
 }
 
 type PageData struct {
-	Artists   []Artist
-	Relations Relations
-	Filters   FilterData // Pour garder les valeurs du formulaire affichées
+	Artists []Artist
+	Filters FilterData
 }
 
-// Structure pour réafficher ce que l'utilisateur a coché
 type FilterData struct {
 	MinCreation int
 	MaxCreation int
@@ -38,65 +37,84 @@ type FilterData struct {
 	MaxAlbum    int
 }
 
+type ArtistPageData struct {
+	Artist    Artist
+	Relations Relations
+}
+
+// --- MAIN ---
+
 func main() {
+	// 1. Servir le dossier "static" (pour les images et scripts)
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	http.HandleFunc("/", handler)
+	// 2. Les Routes
+	http.HandleFunc("/", indexHandler)        // Page d'accueil (Liste + Filtres)
+	http.HandleFunc("/artist", artistHandler) // Page Détail (Carte + Infos)
 
-	log.Println("Serveur démarré sur http://localhost:8080")
+	log.Println("✅ Serveur démarré sur http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	// 1. Récupérer tous les artistes (API + Custom)
-	apiArtists, err := getArtists()
-	if err != nil {
-		log.Println("Erreur API:", err)
+// --- HANDLERS (LOGIQUE) ---
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
+
+	// Récupérer les artistes (API + Custom)
+	apiArtists, _ := getArtists()
 	myArtists := getCustomArtists()
 	allArtists := append(myArtists, apiArtists...)
 
-	// 2. Gestion des Filtres (Si le formulaire est envoyé)
+	// -- LOGIQUE DE FILTRAGE --
 	filteredArtists := []Artist{}
 
-	// Récupération des paramètres de l'URL
+	// Récupération des paramètres URL
 	minCreation, _ := strconv.Atoi(r.URL.Query().Get("minCreation"))
 	maxCreation, _ := strconv.Atoi(r.URL.Query().Get("maxCreation"))
-	minAlbumYear, _ := strconv.Atoi(r.URL.Query().Get("minAlbum"))
-	maxAlbumYear, _ := strconv.Atoi(r.URL.Query().Get("maxAlbum"))
-	membersSelected := r.URL.Query()["members"] // Récupère les cases cochées (ex: ["1", "4"])
+	minAlbum, _ := strconv.Atoi(r.URL.Query().Get("minAlbum"))
+	maxAlbum, _ := strconv.Atoi(r.URL.Query().Get("maxAlbum"))
+	members := r.URL.Query()["members"]
 
-	// Si c'est le premier chargement (pas de filtres), on met des valeurs par défaut larges
-	if r.URL.Query().Get("minCreation") == "" {
+	// Valeurs par défaut si le formulaire n'est pas utilisé
+	if minCreation == 0 {
 		minCreation = 1950
+	}
+	if maxCreation == 0 {
 		maxCreation = 2025
-		minAlbumYear = 1950
-		maxAlbumYear = 2025
+	}
+	if minAlbum == 0 {
+		minAlbum = 1950
+	}
+	if maxAlbum == 0 {
+		maxAlbum = 2025
 	}
 
-	// BOUCLE DE FILTRAGE
-	for _, artist := range allArtists {
+	// Boucle de filtrage
+	for _, a := range allArtists {
 		keep := true
 
-		// Filtre 1 : Date de création (Range) [cite: 65, 71]
-		if artist.CreationDate < minCreation || artist.CreationDate > maxCreation {
+		// 1. Filtre Date Création
+		if a.CreationDate < minCreation || a.CreationDate > maxCreation {
 			keep = false
 		}
 
-		// Filtre 2 : Date premier album (Range) [cite: 66]
-		// On extrait l'année de la string "dd-mm-yyyy"
-		albumYear := extractYear(artist.FirstAlbum)
-		if albumYear < minAlbumYear || albumYear > maxAlbumYear {
+		// 2. Filtre Année Album
+		albYear := extractYear(a.FirstAlbum)
+		if albYear < minAlbum || albYear > maxAlbum {
 			keep = false
 		}
 
-		// Filtre 3 : Nombre de membres (Checkbox) [cite: 67, 72]
-		if len(membersSelected) > 0 {
-			nbMembers := strconv.Itoa(len(artist.Members))
+		// 3. Filtre Nombre de Membres
+		if len(members) > 0 {
+			nbStr := strconv.Itoa(len(a.Members))
 			found := false
-			for _, m := range membersSelected {
-				if m == nbMembers {
+			for _, m := range members {
+				if m == nbStr {
 					found = true
 					break
 				}
@@ -107,57 +125,95 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if keep {
-			filteredArtists = append(filteredArtists, artist)
+			filteredArtists = append(filteredArtists, a)
 		}
 	}
 
-	// Récupération Relation (inchangé)
-	relation, _ := getRelation(1)
-
 	data := PageData{
-		Artists:   filteredArtists, // On envoie la liste filtrée
-		Relations: relation,
-		Filters: FilterData{
-			MinCreation: minCreation,
-			MaxCreation: maxCreation,
-			MinAlbum:    minAlbumYear,
-			MaxAlbum:    maxAlbumYear,
-		},
+		Artists: filteredArtists,
+		Filters: FilterData{MinCreation: minCreation, MaxCreation: maxCreation, MinAlbum: minAlbum, MaxAlbum: maxAlbum},
 	}
 
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "Erreur critique : templates/index.html introuvable", 500)
 		return
 	}
 	tmpl.Execute(w, data)
 }
 
-// Utilitaire pour extraire l'année "1999" de "12-02-1999"
-func extractYear(dateStr string) int {
-	parts := strings.Split(dateStr, "-")
-	if len(parts) == 3 {
-		year, _ := strconv.Atoi(parts[2])
-		return year
+func artistHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, _ := strconv.Atoi(idStr)
+
+	// Retrouver l'artiste cliqué
+	var selected Artist
+	apiArtists, _ := getArtists()
+	myArtists := getCustomArtists()
+	allArtists := append(myArtists, apiArtists...)
+
+	for _, a := range allArtists {
+		if a.Id == id {
+			selected = a
+			break
+		}
 	}
-	// Si pas de date (ex: tes artistes custom sans info), on renvoie une valeur par défaut
+
+	// Retrouver ses relations (dates/lieux)
+	var rel Relations
+	if id < 100 {
+		// Appel API réel
+		rel, _ = getRelation(id)
+	} else {
+		// Données simulées pour tes artistes persos
+		rel = Relations{
+			Id: id,
+			DatesLocations: map[string][]string{
+				"london-uk":    {"01-01-2024"},
+				"paris-france": {"05-01-2024", "06-01-2024"},
+				"tokyo-japan":  {"10-01-2024"},
+			},
+		}
+	}
+
+	data := ArtistPageData{
+		Artist:    selected,
+		Relations: rel,
+	}
+
+	tmpl, err := template.ParseFiles("templates/artist.html")
+	if err != nil {
+		http.Error(w, "Erreur critique : templates/artist.html introuvable", 500)
+		return
+	}
+	tmpl.Execute(w, data)
+}
+
+// --- FONCTIONS UTILITAIRES ---
+
+func extractYear(date string) int {
+	parts := strings.Split(date, "-")
+	if len(parts) == 3 {
+		y, _ := strconv.Atoi(parts[2])
+		return y
+	}
 	return 2000
 }
 
-// Tes artistes personnalisés (J'ai ajouté des fausses dates pour que les filtres marchent sur eux aussi)
 func getCustomArtists() []Artist {
+	// Liste de tes artistes personnalisés
 	return []Artist{
-		{Id: 101, Name: "Aphex Twin", Image: "/static/img/aphex.jpg", CreationDate: 1985, FirstAlbum: "01-01-1992", Members: []string{"Richard D. James"}},
-		{Id: 102, Name: "Crystal Castles", Image: "/static/img/crystal.jpg", CreationDate: 2003, FirstAlbum: "18-03-2008", Members: []string{"Ethan Kath", "Alice Glass"}},
+		{Id: 101, Name: "Aphex Twin", Image: "/static/img/aphex.jpg", CreationDate: 1985, FirstAlbum: "01-01-1992", Members: []string{"Richard"}},
+		{Id: 102, Name: "Crystal Castles", Image: "/static/img/crystal.jpg", CreationDate: 2003, FirstAlbum: "18-03-2008", Members: []string{"Ethan", "Alice"}},
 		{Id: 103, Name: "Ennio Morricone", Image: "/static/img/ennio.jpg", CreationDate: 1946, FirstAlbum: "01-01-1961", Members: []string{"Ennio"}},
 		{Id: 104, Name: "Rihanna", Image: "/static/img/rihanna.jpg", CreationDate: 2003, FirstAlbum: "30-08-2005", Members: []string{"Rihanna"}},
 		{Id: 105, Name: "Daft Punk", Image: "/static/img/daftpunk.jpg", CreationDate: 1993, FirstAlbum: "20-01-1997", Members: []string{"Thomas", "Guy-Manuel"}},
 		{Id: 106, Name: "TV Girl", Image: "/static/img/tvgirl.jpg", CreationDate: 2010, FirstAlbum: "01-01-2014", Members: []string{"Brad", "Jason", "Wyatt"}},
 		{Id: 107, Name: "Björk", Image: "/static/img/bjork.jpg", CreationDate: 1977, FirstAlbum: "05-07-1993", Members: []string{"Björk"}},
-		{Id: 108, Name: "Nirvana", Image: "/static/img/nirvana.jpg", CreationDate: 1987, FirstAlbum: "15-06-1989", Members: []string{"Kurt", "Dave", "Krist"}},
-		{Id: 109, Name: "Snow Strippers", Image: "/static/img/snow.jpg", CreationDate: 2021, FirstAlbum: "01-01-2022", Members: []string{"Tatiana", "Graham"}},
-		{Id: 110, Name: "Venetian Snares", Image: "/static/img/venetian.jpg", CreationDate: 1992, FirstAlbum: "01-01-1998", Members: []string{"Aaron Funk"}},
-		{Id: 111, Name: "Boards of Canada", Image: "/static/img/boc.jpg", CreationDate: 1986, FirstAlbum: "01-01-1998", Members: []string{"Mike", "Marcus"}},
+		{Id: 108, Name: "Snow Strippers", Image: "/static/img/snow.jpg", CreationDate: 2021, FirstAlbum: "01-01-2022", Members: []string{"Tatiana", "Graham"}},
+		{Id: 109, Name: "Venetian Snares", Image: "/static/img/venetian.jpg", CreationDate: 1992, FirstAlbum: "01-01-1998", Members: []string{"Aaron"}},
+		{Id: 110, Name: "Boards of Canada", Image: "/static/img/boc.jpg", CreationDate: 1986, FirstAlbum: "01-01-1998", Members: []string{"Mike", "Marcus"}},
+		{Id: 111, Name: "Deftones", Image: "/static/img/deftones.jpg", CreationDate: 1988, FirstAlbum: "03-10-1995", Members: []string{"Chino", "Stephen", "Abe", "Frank"}},
 	}
 }
 
@@ -173,12 +229,12 @@ func getArtists() ([]Artist, error) {
 }
 
 func getRelation(id int) (Relations, error) {
-	resp, err := http.Get("https://groupietrackers.herokuapp.com/api/relations/1")
+	resp, err := http.Get("https://groupietrackers.herokuapp.com/api/relations/" + strconv.Itoa(id))
 	if err != nil {
 		return Relations{}, err
 	}
 	defer resp.Body.Close()
-	var result Relations
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result, nil
+	var res Relations
+	json.NewDecoder(resp.Body).Decode(&res)
+	return res, nil
 }
