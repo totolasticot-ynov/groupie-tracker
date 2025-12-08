@@ -2,39 +2,54 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Groupie Tracker - Mes Artistes</title>
+    <title>Groupie Tracker - Filters</title>
     <style>
-        /* Un peu de CSS pour faire une jolie grille d'albums */
-        .grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .card {
-            background-color: #f4f4f4;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            width: 200px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .card img {
-            width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
-        .card h3 {
-            font-size: 1.1em;
-            margin: 10px 0 5px;
-        }
+        body { font-family: sans-serif; background-color: #fafafa; }
+        .grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .card { background-color: white; border-radius: 8px; padding: 15px; text-align: center; width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; }
+        .filters-container { background: #333; color: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        .filter-group { margin-bottom: 15px; }
+        label { display: inline-block; margin-right: 10px; }
+        button { background-color: #e91e63; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #c2185b; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">Ma Collection Groupie Tracker</h1>
+    <h1 style="text-align: center;">Groupie Tracker</h1>
 
-    <div style="text-align: center; margin-bottom: 20px;">
-        <input type="text" id="searchBar" placeholder="Rechercher un artiste..." style="padding: 10px; width: 300px;">
+    <div class="filters-container">
+        <form action="/" method="GET">
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                
+                <div class="filter-group">
+                    <h3>Année de création</h3>
+                    <label>Min: <input type="number" name="minCreation" value="{{.Filters.MinCreation}}" min="1950" max="2025"></label>
+                    <label>Max: <input type="number" name="maxCreation" value="{{.Filters.MaxCreation}}" min="1950" max="2025"></label>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Année Premier Album</h3>
+                    <label>Min: <input type="number" name="minAlbum" value="{{.Filters.MinAlbum}}" min="1950" max="2025"></label>
+                    <label>Max: <input type="number" name="maxAlbum" value="{{.Filters.MaxAlbum}}" min="1950" max="2025"></label>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Nombre de membres</h3>
+                    <label><input type="checkbox" name="members" value="1"> 1</label>
+                    <label><input type="checkbox" name="members" value="2"> 2</label>
+                    <label><input type="checkbox" name="members" value="3"> 3</label>
+                    <label><input type="checkbox" name="members" value="4"> 4</label>
+                    <label><input type="checkbox" name="members" value="5"> 5</label>
+                    <label><input type="checkbox" name="members" value="6"> 6+</label>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <button type="submit">Appliquer les filtres</button>
+                <a href="/" style="color: white; margin-left: 10px;">Réinitialiser</a>
+            </div>
+        </form>
     </div>
 
     <div class="grid">
@@ -47,16 +62,12 @@
                 {{ end }}
                 
                 <h3>{{ .Name }}</h3>
+                <p style="font-size: 0.8em; color: #666;">
+                    Créé en : {{ .CreationDate }}<br>
+                    1er Album : {{ .FirstAlbum }}<br>
+                    Membres : {{ len .Members }}
+                </p>
             </div>
-        {{ end }}
-    </div>
-
-    <hr>
-
-    <h2 style="text-align: center;">Exemple de Relations (API)</h2>
-    <div style="text-align: center;">
-        {{ range $key, $value := .Relations.DatesLocations }}
-            <p><strong>{{ $key }}</strong> : {{ $value }}</p>
         {{ end }}
     </div>
 
@@ -65,7 +76,7 @@
         {{ range .Artists }}
             tableauAvecTousLesArtistes.push("{{ .Name }}");
         {{ end }}
-        console.log("Artistes chargés :", tableauAvecTousLesArtistes);
+        console.log("Artistes affichés :", tableauAvecTousLesArtistes.length);
     </script>
     <script src="/static/script.js"></script>
 </body>
