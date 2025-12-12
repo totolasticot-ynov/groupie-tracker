@@ -45,8 +45,9 @@ type FilterData struct {
 }
 
 type ArtistPageData struct {
-	Artist    Artist
-	Relations Relations
+	Artist        Artist
+	Relations     Relations
+	LocationsJson string
 }
 
 type SearchResult struct {
@@ -162,7 +163,13 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data := ArtistPageData{Artist: selected, Relations: rel}
+	locations := make([]string, 0, len(rel.DatesLocations))
+	for k := range rel.DatesLocations {
+		locations = append(locations, k)
+	}
+	locationsJson, _ := json.Marshal(locations)
+
+	data := ArtistPageData{Artist: selected, Relations: rel, LocationsJson: string(locationsJson)}
 	tmpl, err := template.ParseFiles("templates/artist.html")
 	if err != nil {
 		http.Error(w, "Erreur template", 500)
