@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -59,8 +60,8 @@ var (
 	allArtists   []Artist
 	allRelations []Relations
 	mutex        sync.Mutex
-	// On garde un timeout court (5s). Si l'API ne répond pas vite, on passe en mode Simulation.
-	httpClient = &http.Client{Timeout: 5 * time.Second}
+	// On garde un timeout raisonnable (10s). Si l'API ne répond pas, on passe en mode Simulation.
+	httpClient = &http.Client{Timeout: 10 * time.Second}
 )
 
 // --- MAIN ---
@@ -315,8 +316,15 @@ func getAllRelationsIndex() (RelationsIndex, error) {
 		return RelationsIndex{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return RelationsIndex{}, fmt.Errorf("unexpected status: %s", resp.Status)
+	}
+
 	var idx RelationsIndex
-	json.NewDecoder(resp.Body).Decode(&idx)
+	if decErr := json.NewDecoder(resp.Body).Decode(&idx); decErr != nil {
+		return RelationsIndex{}, decErr
+	}
 	return idx, nil
 }
 
@@ -326,8 +334,15 @@ func getArtists() ([]Artist, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %s", resp.Status)
+	}
+
 	var arr []Artist
-	json.NewDecoder(resp.Body).Decode(&arr)
+	if decErr := json.NewDecoder(resp.Body).Decode(&arr); decErr != nil {
+		return nil, decErr
+	}
 	return arr, nil
 }
 
@@ -337,8 +352,15 @@ func getRelation(id int) (Relations, error) {
 		return Relations{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return Relations{}, fmt.Errorf("unexpected status: %s", resp.Status)
+	}
+
 	var r Relations
-	json.NewDecoder(resp.Body).Decode(&r)
+	if decErr := json.NewDecoder(resp.Body).Decode(&r); decErr != nil {
+		return Relations{}, decErr
+	}
 	return r, nil
 }
 
