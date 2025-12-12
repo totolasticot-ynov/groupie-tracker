@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #181818;
+            --accent: #1db954;
+            --text: #fff;
+            --hover: #282828;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, #0a0a0a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* HEADER */
+        header {
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(29, 185, 84, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(29, 185, 84, 0.2);
+        }
+
+        h1 {
+            font-size: 4rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            animation: slideDown 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: slideDown 0.8s ease-out 0.4s both;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.08);
+            box-shadow: 0 10px 30px rgba(29, 185, 84, 0.4);
+        }
+
+        .btn-secondary {
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            background: transparent;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(29, 185, 84, 0.1);
+            transform: scale(1.08);
+        }
+
+        /* MAIN SECTION */
+        main {
+            padding: 80px 20px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 60px;
+            color: var(--text);
+            font-weight: 800;
+            animation: slideInFromLeft 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* CAROUSEL CONTAINER */
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 40px;
+            background: linear-gradient(90deg, var(--bg) 0%, transparent 20%, transparent 80%, var(--bg) 100%);
+        }
+
+        .carousel {
+            display: flex;
+            gap: 25px;
+            padding: 20px 0;
+            animation: slideRight 120s linear infinite;
+            will-change: transform;
+        }
+
+        @keyframes slideRight {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .carousel:hover {
+            animation-play-state: paused;
+        }
+
+        /* ALBUM CARDS */
+        .album-card {
+            flex: 0 0 280px;
+            background: linear-gradient(135deg, var(--card) 0%, #222 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(29, 185, 84, 0.2);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            height: 380px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .album-card:hover {
+            transform: translateY(-15px) scale(1.05);
+            border-color: var(--accent);
+            box-shadow: 0 20px 50px rgba(29, 185, 84, 0.3);
+        }
+
+        .album-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            transition: all 0.4s ease;
+            filter: brightness(0.85);
+            position: relative;
+        }
+
+        .album-card:hover .album-image {
+            filter: brightness(1.1) blur(0px);
+            transform: scale(1.1);
+        }
+
+        .album-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 2;
+        }
+
+        .album-card:hover .album-overlay {
+            opacity: 1;
+        }
+
+        .play-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 3;
+            box-shadow: 0 10px 30px rgba(29, 185, 84, 0.5);
+        }
+
+        .album-card:hover .play-button {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 15px solid #000;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            margin-left: 5px;
+        }
+
+        .album-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .album-artist {
+            font-size: 0.95rem;
+            color: #aaa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* CAROUSEL CONTROLS */
+        .carousel-controls {
+            display: none;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            animation: slideInFromLeft 0.8s ease-out 0.6s both;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: var(--accent);
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(29, 185, 84, 0.4);
+        }
+
+        /* STATS SECTION */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 80px auto 0;
+            padding: 0 20px;
+            animation: slideInFromLeft 0.8s ease-out 0.7s both;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(29, 185, 84, 0.1) 0%, transparent 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(29, 185, 84, 0.3);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(29, 185, 84, 0.2) 0%, rgba(29, 185, 84, 0.05) 100%);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .album-card {
+                flex: 0 0 240px;
+                height: 340px;
+            }
+
+            .album-image {
+                height: 240px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        /* ANIMATIONS */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .album-card {
+            animation: pulse 3s ease-in-out infinite;
+            animation-delay: calc(0.1s * var(--index, 0));
+        }
+
+        .album-card:hover {
+            animation: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Groupie Tracker</h1>
+        <p class="subtitle">Découvrez les meilleurs artistes et concerts</p>
+        <div class="cta-buttons">
+            <a href="/search" class="btn btn-primary">Explorer les Artistes</a>
+            <a href="/search" class="btn btn-secondary">Voir Tous les Concerts</a>
+        </div>
+    </header>
+
+    <main>
+        <h2 class="section-title">Albums Populaires</h2>
+
+        <div class="carousel-wrapper">
+            <div class="carousel" id="carousel">
+                <!-- Les albums seront chargés par JavaScript -->
+            </div>
+        </div>
+
+        <div class="carousel-controls">
+            <button class="control-btn" id="prevBtn">&lt;</button>
+            <button class="control-btn" id="nextBtn">&gt;</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="artistCount">0</div>
+                <div class="stat-label">Artistes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1000+</div>
+                <div class="stat-label">Concerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Pays</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const carousel = document.getElementById('carousel');
+        let artists = [];
+
+        // Charger les données des artistes
+        async function loadArtists() {
+            try {
+                const response = await fetch('/api/artists');
+                if (!response.ok) throw new Error('Erreur de chargement');
+                
+                artists = await response.json();
+                document.getElementById('artistCount').textContent = artists.length;
+                renderCarousel();
+            } catch (error) {
+                console.error('Erreur:', error);
+                // Charger des données de démonstration
+                loadDemoData();
+            }
+        }
+
+        function loadDemoData() {
+            artists = [
+                { id: 1, name: 'The Beatles', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=The+Beatles', firstAlbum: 'Please Please Me' },
+                { id: 2, name: 'Pink Floyd', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Pink+Floyd', firstAlbum: 'The Piper at the Gates' },
+                { id: 3, name: 'Queen', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Queen', firstAlbum: 'Queen' },
+                { id: 4, name: 'David Bowie', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=David+Bowie', firstAlbum: 'David Bowie' },
+                { id: 5, name: 'Led Zeppelin', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Led+Zeppelin', firstAlbum: 'Led Zeppelin IV' },
+                { id: 6, name: 'The Rolling Stones', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Rolling+Stones', firstAlbum: 'The Rolling Stones' },
+                { id: 7, name: 'Bob Dylan', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Bob+Dylan', firstAlbum: 'Bob Dylan' },
+                { id: 8, name: 'The Who', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=The+Who', firstAlbum: 'The Who Sings My Generation' },
+                { id: 9, name: 'Jimi Hendrix', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Jimi+Hendrix', firstAlbum: 'Are You Experienced' },
+                { id: 10, name: 'The Doors', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=The+Doors', firstAlbum: 'The Doors' },
+                { id: 11, name: 'Radiohead', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Radiohead', firstAlbum: 'Pablo Honey' },
+                { id: 12, name: 'Nirvana', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Nirvana', firstAlbum: 'Nevermind' },
+                { id: 13, name: 'The Cure', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=The+Cure', firstAlbum: 'Three Imaginary Boys' },
+                { id: 14, name: 'Joy Division', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Joy+Division', firstAlbum: 'Unknown Pleasures' },
+                { id: 15, name: 'Metallica', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Metallica', firstAlbum: 'Kill Em All' },
+                { id: 16, name: 'Black Sabbath', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Black+Sabbath', firstAlbum: 'Black Sabbath' },
+                { id: 17, name: 'Deep Purple', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Deep+Purple', firstAlbum: 'Shades of Deep Purple' },
+                { id: 18, name: 'AC/DC', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=AC/DC', firstAlbum: 'High Voltage' },
+                { id: 19, name: 'Pink', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Pink', firstAlbum: 'Cant Take Me Home' },
+                { id: 20, name: 'Eminem', image: 'https://via.placeholder.com/280x280/1db954/ffffff?text=Eminem', firstAlbum: 'Infinite' },
+            ];
+            document.getElementById('artistCount').textContent = artists.length;
+            renderCarousel();
+        }
+
+        function renderCarousel() {
+            carousel.innerHTML = '';
+            
+            // Dupliquer les artistes pour créer une boucle infinie
+            const duplicatedArtists = [...artists, ...artists, ...artists];
+            
+            duplicatedArtists.forEach((artist, index) => {
+                const card = document.createElement('div');
+                card.className = 'album-card';
+                card.style.setProperty('--index', index % artists.length);
+                card.innerHTML = `
+                    <div style="position: relative; overflow: hidden;">
+                        <img src="${artist.image}" alt="${artist.name}" class="album-image">
+                        <div class="album-overlay"></div>
+                        <div class="play-button" onclick="window.location.href='/artist?id=${artist.id}'">
+                            <div class="play-icon"></div>
+                        </div>
+                    </div>
+                    <div class="album-info">
+                        <div class="album-name">${artist.name}</div>
+                        <div class="album-artist">${artist.firstAlbum || 'Album'}</div>
+                    </div>
+                `;
+                carousel.appendChild(card);
+            });
+        }
+
+        // Charger les données au démarrage
+        loadArtists();
+    </script>
+</body>
+</html>

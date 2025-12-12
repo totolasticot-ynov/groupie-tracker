@@ -60,19 +60,17 @@ var (
 	allArtists   []Artist
 	allRelations []Relations
 	mutex        sync.Mutex
-	// On garde un timeout raisonnable (10s). Si l'API ne répond pas, on passe en mode Simulation.
-	httpClient = &http.Client{Timeout: 10 * time.Second}
+	httpClient   = &http.Client{Timeout: 10 * time.Second}
 )
 
 // --- MAIN ---
 
 func main() {
-	log.Println("🚀 Démarrage du serveur...")
+	log.Println("Démarrage du serveur...")
 
 	// Chargement initial (Custom immédiat)
 	mutex.Lock()
 	allArtists = getCustomArtists()
-	// On pré-remplit les relations custom
 	for _, art := range allArtists {
 		allRelations = append(allRelations, generateMockRelation(art.Id))
 	}
@@ -84,154 +82,62 @@ func main() {
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/search", indexHandler)
 	http.HandleFunc("/artist", artistHandler)
-	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/api/artists", apiArtistsHandler)
+	http.HandleFunc("/api/search", searchHandler)
 
-	log.Println("✅ Serveur prêt sur http://localhost:8080")
+	log.Println("Serveur prêt sur http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 // --- LOGIQUE DE CHARGEMENT ---
 
 func loadApiData() {
-	log.Println("🔄 Tentative de connexion à l'API...")
+	log.Println("Connexion à l'API en cours...")
 
-	// 1. Récupération Artistes API
 	apiArtists, err := getArtists()
 	if err == nil {
 		mutex.Lock()
-		allArtists = append(getCustomArtists(), apiArtists...) // On fusionne proprement
+		allArtists = append(getCustomArtists(), apiArtists...)
 		mutex.Unlock()
-		log.Printf("✅ %d artistes chargés.\n", len(allArtists))
+		log.Printf("Artistes chargés: %d\n", len(allArtists))
 	} else {
-		log.Println("⚠️ API Artistes injoignable (Mode hors ligne partiel).")
+		log.Println("API Artistes indisponible (mode hors ligne)")
 	}
 
-	// 2. Récupération Relations API
 	apiRelIndex, err := getAllRelationsIndex()
 	if err == nil {
 		mutex.Lock()
-		// On ajoute les relations API à nos relations existantes
 		allRelations = append(allRelations, apiRelIndex.Index...)
 		mutex.Unlock()
-		log.Println("✅ Relations chargées.")
+		log.Println("Relations chargées")
 	} else {
-		log.Println("⚠️ API Relations lente : Les dates seront simulées si nécessaire.")
+		log.Println("API Relations indisponible (mode simulation)")
 	}
 }
 
-// --- HANDLERS ---
+// --- HOME HANDLER ---
 
-func artistHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, _ := strconv.Atoi(idStr)
-
-	var selected Artist
-	mutex.Lock()
-	for _, a := range allArtists {
-		if a.Id == id {
-			selected = a
-			break
-		}
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
 	}
-
-	// Recherche relation en mémoire
-	var rel Relations
-	foundRel := false
-	for _, rl := range allRelations {
-		if rl.Id == id {
-			rel = rl
-			foundRel = true
-			break
-		}
-	}
-	mutex.Unlock()
-
-	// --- SYSTEME DE SECOURS (FALLBACK) ---
-	// Si on n'a pas de dates, on essaie de les chercher, sinon on SIMULE.
-	if !foundRel || len(rel.DatesLocations) == 0 {
-		// Essai appel API unique
-		fetchedRel, err := getRelation(id)
-		if err == nil && len(fetchedRel.DatesLocations) > 0 {
-			rel = fetchedRel
-		} else {
-			// ULTIME SECOURS : Si l'API échoue, on invente des dates pour que le site soit joli
-			log.Printf("⚡ Mode Simulation activé pour l'artiste ID %d\n", id)
-			rel = generateMockRelation(id)
-		}
-	}
-
-	data := ArtistPageData{Artist: selected, Relations: rel}
-	tmpl, err := template.ParseFiles("templates/artist.html")
+	tmpl, err := template.ParseFiles("./templates/home.html")
 	if err != nil {
-		http.Error(w, "Erreur template", 500)
+		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
+		log.Println("Erreur template:", err)
 		return
 	}
-	tmpl.Execute(w, data)
+	tmpl.Execute(w, nil)
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
-	query := strings.ToLower(r.URL.Query().Get("q"))
-	results := []SearchResult{}
-	if query == "" {
-		json.NewEncoder(w).Encode(results)
-		return
-	}
-
-	mutex.Lock()
-	artists := allArtists
-	relations := allRelations
-	mutex.Unlock()
-
-	seen := make(map[string]bool)
-
-	for _, a := range artists {
-		if strings.Contains(strings.ToLower(a.Name), query) {
-			addResult(&results, a.Name, "Artiste", a.Id, seen)
-		}
-		for _, m := range a.Members {
-			if strings.Contains(strings.ToLower(m), query) {
-				addResult(&results, m, "Membre", a.Id, seen)
-			}
-		}
-		if strings.Contains(strconv.Itoa(a.CreationDate), query) {
-			addResult(&results, "Créé en "+strconv.Itoa(a.CreationDate), "Date", a.Id, seen)
-		}
-		if strings.Contains(strings.ToLower(a.FirstAlbum), query) {
-			addResult(&results, "Album: "+a.FirstAlbum, "Album", a.Id, seen)
-		}
-	}
-
-	for _, rel := range relations {
-		for loc := range rel.DatesLocations {
-			cleanLoc := strings.ReplaceAll(strings.ReplaceAll(loc, "-", " "), "_", " ")
-			if strings.Contains(strings.ToLower(cleanLoc), query) {
-				artName := "Artiste"
-				for _, a := range artists {
-					if a.Id == rel.Id {
-						artName = a.Name
-						break
-					}
-				}
-				addResult(&results, cleanLoc+" ("+artName+")", "Lieu", rel.Id, seen)
-			}
-		}
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
-}
-
-func addResult(res *[]SearchResult, txt, typ string, id int, seen map[string]bool) {
-	key := txt + typ + strconv.Itoa(id)
-	if !seen[key] {
-		*res = append(*res, SearchResult{Text: txt, Type: typ, ArtistId: id})
-		seen[key] = true
-	}
-}
+// --- INDEX HANDLER (Search/Browse Page) ---
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/search" {
 		http.NotFound(w, r)
 		return
 	}
@@ -299,16 +205,116 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-// --- DATA & API ---
+// --- ARTIST HANDLER ---
 
-func extractYear(d string) int {
-	parts := strings.Split(d, "-")
-	if len(parts) == 3 {
-		v, _ := strconv.Atoi(parts[2])
-		return v
+func artistHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, _ := strconv.Atoi(idStr)
+
+	var selected Artist
+	mutex.Lock()
+	for _, a := range allArtists {
+		if a.Id == id {
+			selected = a
+			break
+		}
 	}
-	return 2000
+
+	var rel Relations
+	foundRel := false
+	for _, rl := range allRelations {
+		if rl.Id == id {
+			rel = rl
+			foundRel = true
+			break
+		}
+	}
+	mutex.Unlock()
+
+	if !foundRel || len(rel.DatesLocations) == 0 {
+		fetchedRel, err := getRelation(id)
+		if err == nil && len(fetchedRel.DatesLocations) > 0 {
+			rel = fetchedRel
+		} else {
+			log.Printf("Mode Simulation activé pour l'artiste ID %d\n", id)
+			rel = generateMockRelation(id)
+		}
+	}
+
+	data := ArtistPageData{Artist: selected, Relations: rel}
+	tmpl, err := template.ParseFiles("templates/artist.html")
+	if err != nil {
+		http.Error(w, "Erreur template", 500)
+		return
+	}
+	tmpl.Execute(w, data)
 }
+
+// --- SEARCH HANDLER ---
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := strings.ToLower(r.URL.Query().Get("q"))
+	results := []SearchResult{}
+	if query == "" {
+		json.NewEncoder(w).Encode(results)
+		return
+	}
+
+	mutex.Lock()
+	artists := allArtists
+	relations := allRelations
+	mutex.Unlock()
+
+	seen := make(map[string]bool)
+
+	for _, a := range artists {
+		if strings.Contains(strings.ToLower(a.Name), query) {
+			addResult(&results, a.Name, "Artiste", a.Id, seen)
+		}
+		for _, m := range a.Members {
+			if strings.Contains(strings.ToLower(m), query) {
+				addResult(&results, m, "Membre", a.Id, seen)
+			}
+		}
+		if strings.Contains(strconv.Itoa(a.CreationDate), query) {
+			addResult(&results, "Créé en "+strconv.Itoa(a.CreationDate), "Date", a.Id, seen)
+		}
+		if strings.Contains(strings.ToLower(a.FirstAlbum), query) {
+			addResult(&results, "Album: "+a.FirstAlbum, "Album", a.Id, seen)
+		}
+	}
+
+	for _, rel := range relations {
+		for loc := range rel.DatesLocations {
+			cleanLoc := strings.ReplaceAll(strings.ReplaceAll(loc, "-", " "), "_", " ")
+			if strings.Contains(strings.ToLower(cleanLoc), query) {
+				artName := "Artiste"
+				for _, a := range artists {
+					if a.Id == rel.Id {
+						artName = a.Name
+						break
+					}
+				}
+				addResult(&results, cleanLoc+" ("+artName+")", "Lieu", rel.Id, seen)
+			}
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+// --- API ARTISTS HANDLER ---
+
+func apiArtistsHandler(w http.ResponseWriter, r *http.Request) {
+	mutex.Lock()
+	currentArtists := allArtists
+	mutex.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(currentArtists)
+}
+
+// --- API CALLS ---
 
 func getAllRelationsIndex() (RelationsIndex, error) {
 	resp, err := httpClient.Get("https://groupietrackers.herokuapp.com/api/relations")
@@ -364,8 +370,27 @@ func getRelation(id int) (Relations, error) {
 	return r, nil
 }
 
-// --- GÉNÉRATEUR DE DONNÉES DE SECOURS (SIMULATION) ---
-// C'est cette fonction qui sauve ton projet si l'API plante !
+// --- UTILITY FUNCTIONS ---
+
+func extractYear(d string) int {
+	parts := strings.Split(d, "-")
+	if len(parts) == 3 {
+		v, _ := strconv.Atoi(parts[2])
+		return v
+	}
+	return 2000
+}
+
+func addResult(res *[]SearchResult, txt, typ string, id int, seen map[string]bool) {
+	key := txt + typ + strconv.Itoa(id)
+	if !seen[key] {
+		*res = append(*res, SearchResult{Text: txt, Type: typ, ArtistId: id})
+		seen[key] = true
+	}
+}
+
+// --- MOCK DATA GENERATOR ---
+
 func generateMockRelation(id int) Relations {
 	return Relations{
 		Id: id,
