@@ -133,12 +133,12 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="application/json" id="locations-data">{{ .LocationsJson }}</script>
     <script>
         var map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
 
-        var locations = [];
-        {{ range $key, $val := .Relations.DatesLocations }} locations.push("{{ $key }}"); {{ end }}
+        var locations = JSON.parse(document.getElementById('locations-data').textContent);
 
         const statusText = document.getElementById('status');
         

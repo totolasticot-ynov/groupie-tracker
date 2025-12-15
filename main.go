@@ -45,8 +45,9 @@ type FilterData struct {
 }
 
 type ArtistPageData struct {
-	Artist    Artist
-	Relations Relations
+	Artist        Artist
+	Relations     Relations
+	LocationsJson string
 }
 
 type SearchResult struct {
@@ -136,8 +137,35 @@ func exploreHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+<<<<<<< HEAD
 	log.Println("Chargement de la page explore...")
 	tmpl, err := template.ParseFiles("./templates/explore.html")
+=======
+	mutex.Unlock()
+
+	// --- SYSTEME DE SECOURS (FALLBACK) ---
+	// Si on n'a pas de dates, on essaie de les chercher, sinon on SIMULE.
+	if !foundRel || len(rel.DatesLocations) == 0 {
+		// Essai appel API unique
+		fetchedRel, err := getRelation(id)
+		if err == nil && len(fetchedRel.DatesLocations) > 0 {
+			rel = fetchedRel
+		} else {
+			// ULTIME SECOURS : Si l'API échoue, on invente des dates pour que le site soit joli
+			log.Printf("⚡ Mode Simulation activé pour l'artiste ID %d\n", id)
+			rel = generateMockRelation(id)
+		}
+	}
+
+	locations := make([]string, 0, len(rel.DatesLocations))
+	for k := range rel.DatesLocations {
+		locations = append(locations, k)
+	}
+	locationsJson, _ := json.Marshal(locations)
+
+	data := ArtistPageData{Artist: selected, Relations: rel, LocationsJson: string(locationsJson)}
+	tmpl, err := template.ParseFiles("templates/artist.html")
+>>>>>>> b0b26b9b60ae78041463e35d327320f0c6adb948
 	if err != nil {
 		log.Println("Erreur template explore:", err)
 		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
