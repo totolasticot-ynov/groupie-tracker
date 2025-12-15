@@ -137,46 +137,14 @@ func exploreHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-<<<<<<< HEAD
-	log.Println("Chargement de la page explore...")
+
 	tmpl, err := template.ParseFiles("./templates/explore.html")
-=======
-	mutex.Unlock()
-
-	// --- SYSTEME DE SECOURS (FALLBACK) ---
-	// Si on n'a pas de dates, on essaie de les chercher, sinon on SIMULE.
-	if !foundRel || len(rel.DatesLocations) == 0 {
-		// Essai appel API unique
-		fetchedRel, err := getRelation(id)
-		if err == nil && len(fetchedRel.DatesLocations) > 0 {
-			rel = fetchedRel
-		} else {
-			// ULTIME SECOURS : Si l'API échoue, on invente des dates pour que le site soit joli
-			log.Printf("⚡ Mode Simulation activé pour l'artiste ID %d\n", id)
-			rel = generateMockRelation(id)
-		}
-	}
-
-	locations := make([]string, 0, len(rel.DatesLocations))
-	for k := range rel.DatesLocations {
-		locations = append(locations, k)
-	}
-	locationsJson, _ := json.Marshal(locations)
-
-	data := ArtistPageData{Artist: selected, Relations: rel, LocationsJson: string(locationsJson)}
-	tmpl, err := template.ParseFiles("templates/artist.html")
->>>>>>> b0b26b9b60ae78041463e35d327320f0c6adb948
 	if err != nil {
-		log.Println("Erreur template explore:", err)
 		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
+		log.Println("Erreur template:", err)
 		return
 	}
-	log.Println("Template explore chargé, exécution...")
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		log.Println("Erreur exécution template explore:", err)
-	}
-	log.Println("Page explore servie avec succès")
+	tmpl.Execute(w, nil)
 }
 
 // --- INDEX HANDLER (Search/Browse Page) ---
@@ -287,6 +255,15 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := ArtistPageData{Artist: selected, Relations: rel}
+
+	// Générer le JSON des locations pour le template
+	locations := []string{}
+	for loc := range rel.DatesLocations {
+		locations = append(locations, loc)
+	}
+	locationsJson, _ := json.Marshal(locations)
+	data.LocationsJson = string(locationsJson)
+
 	tmpl, err := template.ParseFiles("templates/artist.html")
 	if err != nil {
 		http.Error(w, "Erreur template", 500)
