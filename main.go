@@ -84,6 +84,7 @@ func main() {
 
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/search", indexHandler)
+	http.HandleFunc("/explore", exploreHandler)
 	http.HandleFunc("/artist", artistHandler)
 	http.HandleFunc("/api/artists", apiArtistsHandler)
 	http.HandleFunc("/api/search", searchHandler)
@@ -125,13 +126,29 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	tmpl, err := template.ParseFiles("./templates/home.html")
-	if err != nil {
-		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
-		log.Println("Erreur template:", err)
+	http.Redirect(w, r, "/explore", http.StatusFound)
+}
+
+// --- EXPLORE HANDLER ---
+
+func exploreHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/explore" {
+		http.NotFound(w, r)
 		return
 	}
-	tmpl.Execute(w, nil)
+	log.Println("Chargement de la page explore...")
+	tmpl, err := template.ParseFiles("./templates/explore.html")
+	if err != nil {
+		log.Println("Erreur template explore:", err)
+		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
+		return
+	}
+	log.Println("Template explore chargé, exécution...")
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		log.Println("Erreur exécution template explore:", err)
+	}
+	log.Println("Page explore servie avec succès")
 }
 
 // --- INDEX HANDLER (Search/Browse Page) ---

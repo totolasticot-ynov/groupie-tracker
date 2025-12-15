@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorer les Artistes - Groupie Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #181818;
+            --accent: #1db954;
+            --text: #fff;
+            --hover: #282828;
+            --border: #333;
+        }
+
+        body.light-mode {
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --accent: #1db954;
+            --text: #000;
+            --hover: #e8e8e8;
+            --border: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, #0a0a0a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, var(--bg) 0%, #fff 100%);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 2px solid var(--accent);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-weight: 800;
+            letter-spacing: -2px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--text);
+            opacity: 0.7;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 12px 24px;
+            background: rgba(29, 185, 84, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .filters {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            max-width: 1000px;
+            margin: 0 auto 50px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters input {
+            padding: 10px 15px;
+            background: var(--hover);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .filters input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(29, 185, 84, 0.2);
+        }
+
+        .filters button {
+            padding: 10px 30px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filters button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .artist-card {
+            background: linear-gradient(135deg, var(--card) 0%, var(--hover) 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(29, 185, 84, 0.2);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .artist-card:hover {
+            transform: translateY(-15px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 50px rgba(29, 185, 84, 0.3);
+        }
+
+        .artist-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            filter: brightness(0.8);
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, #1db954, #191414);
+        }
+
+        .artist-card:hover .artist-image {
+            filter: brightness(1.1);
+            transform: scale(1.05);
+        }
+
+        .artist-info {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .artist-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .artist-meta {
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0.6;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .meta-badge {
+            background: rgba(29, 185, 84, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(29, 185, 84, 0.3);
+            display: inline-block;
+        }
+
+        .artist-description {
+            font-size: 0.95rem;
+            color: var(--text);
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .artist-members {
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0.7;
+            margin-bottom: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .artist-members strong {
+            color: var(--accent);
+        }
+
+        .view-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #000;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            text-align: center;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .view-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(29, 185, 84, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(29, 185, 84, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .theme-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            header h1 {
+                font-size: 2.5rem;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filters input,
+            .filters button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" title="Basculer le mode clair/sombre">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <a href="/" class="back-btn">Retour</a>
+
+    <header>
+        <h1>Explorer les Artistes</h1>
+        <p>Découvrez vos artistes préférés</p>
+    </header>
+
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="Chercher un artiste...">
+        <button onclick="filterArtists()">Rechercher</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Chargement des artistes...</p>
+    </div>
+
+    <div class="gallery" id="gallery" style="display: none;"></div>
+
+    <script>
+        let allArtists = [];
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const body = document.body;
+
+        // Charger le thème sauvegardé
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            body.classList.add('light-mode');
+            themeIcon.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            
+            if (body.classList.contains('light-mode')) {
+                localStorage.setItem('theme', 'light');
+                themeIcon.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.textContent = '🌙';
+            }
+        });
+
+        async function loadArtists() {
+            try {
+                const response = await fetch('/api/artists');
+                if (!response.ok) throw new Error('Erreur');
+                
+                allArtists = await response.json();
+                if (!allArtists || allArtists.length === 0) {
+                    loadDemoArtists();
+                } else {
+                    renderGallery(allArtists);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                loadDemoArtists();
+            }
+        }
+
+        function loadDemoArtists() {
+            allArtists = [
+                {
+                    id: 1,
+                    name: 'The Beatles',
+                    image: 'https://images.genius.com/e8a267c8e45c40a4e1dbab7b23a0a3fc.1000x1000x1.jpg',
+                    creationDate: 1960,
+                    firstAlbum: '03-03-1963',
+                    members: ['John Lennon', 'Paul McCartney', 'George Harrison', 'Ringo Starr'],
+                    description: 'Groupe de rock britannique qui a révolutionné la musique pop et rock. Les Beatles sont l\'un des groupes les plus influents et les plus vendus de tous les temps.'
+                },
+                {
+                    id: 2,
+                    name: 'Pink Floyd',
+                    image: 'https://images.genius.com/d3c4ae8e8d8e8e8e8e8e8e8e8e8e8e8e.1000x1000x1.jpg',
+                    creationDate: 1965,
+                    firstAlbum: '05-08-1967',
+                    members: ['David Gilmour', 'Nick Mason', 'Roger Waters', 'Rick Wright'],
+                    description: 'Groupe de rock progressif britannique connu pour ses albums conceptuels et ses paysages sonores complexes. Pink Floyd a redéfini le rock avec des albums comme "The Dark Side of the Moon".'
+                },
+                {
+                    id: 3,
+                    name: 'Queen',
+                    image: 'https://images.genius.com/95f3b8c8e8e8e8e8e8e8e8e8e8e8e8e8.1000x1000x1.jpg',
+                    creationDate: 1970,
+                    firstAlbum: '13-02-1973',
+                    members: ['Freddie Mercury', 'Brian May', 'Roger Taylor', 'John Deacon'],
+                    description: 'Groupe de rock britannique fondé par quatre musiciens de talent. Queen est célèbre pour ses performances énergiques et ses chansons emblématiques comme "Bohemian Rhapsody".'
+                },
+                {
+                    id: 4,
+                    name: 'David Bowie',
+                    image: 'https://images.genius.com/d2c3b8e8e8e8e8e8e8e8e8e8e8e8e8e8.1000x1000x1.jpg',
+                    creationDate: 1967,
+                    firstAlbum: '01-01-1967',
+                    members: ['David Bowie'],
+                    description: 'Musicien et acteur britannique qui a révolutionné la musique pop. David Bowie est connu pour son innovation constante et ses réinventions artistiques tout au long de sa carrière.'
+                },
+                {
+                    id: 5,
+                    name: 'Led Zeppelin',
+                    image: 'https://images.genius.com/f8d4c9e8e8e8e8e8e8e8e8e8e8e8e8e8.1000x1000x1.jpg',
+                    creationDate: 1968,
+                    firstAlbum: '12-01-1969',
+                    members: ['Robert Plant', 'Jimmy Page', 'John Paul Jones', 'John Bonham'],
+                    description: 'Groupe de rock britannique fondateur du heavy metal et rock progressif. Led Zeppelin est réputé pour ses performances en direct épiques et ses albums très influents.'
+                }
+            ];
+            renderGallery(allArtists);
+        }
+
+        function renderGallery(artists) {
+            const gallery = document.getElementById('gallery');
+            const loading = document.getElementById('loading');
+
+            gallery.innerHTML = '';
+            
+            artists.forEach(artist => {
+                const card = document.createElement('div');
+                card.className = 'artist-card';
+                
+                const members = Array.isArray(artist.members) ? artist.members.join(', ') : 'N/A';
+                const year = artist.creationDate || new Date().getFullYear();
+                const description = artist.description || 'Artiste talentueux avec une carrière remarquable dans l\'industrie musicale.';
+                
+                card.innerHTML = `
+                    <img src="${artist.image}" alt="${artist.name}" class="artist-image" onerror="this.src='https://via.placeholder.com/320x280?text=${encodeURIComponent(artist.name)}'">
+                    <div class="artist-info">
+                        <h2 class="artist-name">${artist.name}</h2>
+                        <div class="artist-meta">
+                            <span class="meta-badge">Depuis ${year}</span>
+                            <span class="meta-badge">${artist.members.length} membre(s)</span>
+                        </div>
+                        <p class="artist-description">${description}</p>
+                        <div class="artist-members">
+                            <strong>Membres:</strong> ${members}
+                        </div>
+                        <a href="/artist?id=${artist.id}" class="view-btn">Voir détails</a>
+                    </div>
+                `;
+                gallery.appendChild(card);
+            });
+
+            loading.style.display = 'none';
+            gallery.style.display = 'grid';
+        }
+
+        function filterArtists() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allArtists.filter(artist => 
+                artist.name.toLowerCase().includes(query) ||
+                (artist.description && artist.description.toLowerCase().includes(query)) ||
+                (artist.members && artist.members.some(m => m.toLowerCase().includes(query)))
+            );
+            renderGallery(filtered.length > 0 ? filtered : allArtists);
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', filterArtists);
+        loadArtists();
+    </script>
+</body>
+</html>
