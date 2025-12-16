@@ -126,7 +126,22 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	http.Redirect(w, r, "/explore", http.StatusFound)
+
+	mutex.Lock()
+	currentArtists := allArtists
+	mutex.Unlock()
+
+	tmpl, err := template.ParseFiles("./templates/explore_home.html")
+	if err != nil {
+		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
+		log.Println("Erreur template:", err)
+		return
+	}
+
+	data := PageData{
+		Artists: currentArtists,
+	}
+	tmpl.Execute(w, data)
 }
 
 // --- EXPLORE HANDLER ---
