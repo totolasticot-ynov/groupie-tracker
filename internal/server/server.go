@@ -137,13 +137,23 @@ func exploreHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("./templates/explore.html")
+	mutex.Lock()
+	artists := allArtists
+	mutex.Unlock()
+
+	data := struct {
+		Artists []Artist
+	}{
+		Artists: artists,
+	}
+
+	tmpl, err := template.ParseFiles("./templates/explore_home.html")
 	if err != nil {
 		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
 		log.Println("Erreur template:", err)
 		return
 	}
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, data)
 }
 
 // --- INDEX HANDLER (Search/Browse Page) ---
