@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker - Accueil</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* Dark mode background */
+            color: white;
+            overflow: hidden; /* Prevent scrollbars */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Background image wall */
+        .background-wall {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%; /* Double width for seamless loop */
+            height: 100%;
+            display: flex;
+            animation: scroll 20s linear infinite; /* Slow continuous scroll */
+            z-index: -1;
+        }
+
+        .background-wall img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            margin: 10px;
+            pointer-events: none; /* Prevent interaction */
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%); /* Move left by half width for loop */
+            }
+        }
+
+        /* Dark overlay */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            z-index: 0;
+        }
+
+        /* Hero section */
+        .hero {
+            text-align: center;
+            z-index: 1;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .hero button {
+            background-color: #1DB954; /* Spotify green */
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero button:hover {
+            background-color: #1ED760; /* Lighter green on hover */
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-wall">
+        {{range .Artists}}
+        <img src="{{.Image}}" alt="Album Cover">
+        {{end}}
+        <!-- Placeholders if no data -->
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+        <img src="https://via.placeholder.com/200" alt="Placeholder">
+    </div>
+    <div class="overlay"></div>
+    <div class="hero">
+        <h1>Groupie Tracker</h1>
+        <button onclick="window.location.href='/search'">Accéder au site</button>
+    </div>
+</body>
+</html>
