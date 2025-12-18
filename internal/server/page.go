@@ -6,14 +6,14 @@ import (
 	"os"
 )
 
-type PageData struct {
+type ExplorePageData struct {
 	PayPalClientID string
 }
 
 func ExplorePage(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("templates/explore.html"))
 
-	data := PageData{
+	data := ExplorePageData{
 		PayPalClientID: os.Getenv("PAYPAL_CLIENT_ID"),
 	}
 
