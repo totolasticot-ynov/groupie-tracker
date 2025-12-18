@@ -4,113 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Groupie Tracker - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #121212; /* Dark mode background */
-            color: white;
-            overflow: hidden; /* Prevent scrollbars */
-            height: 100vh;
+        :root { 
+            --bg: #121212; 
+            --card: #181818; 
+            --accent: #1db954; 
+            --text: #fff; 
+            --hover: #282828; 
+        }
+
+        body.light-mode {
+            --bg: #f5f5f5; 
+            --card: #fff; 
+            --text: #000; 
+            --hover: #e8e8e8; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 40px 20px; 
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            position: relative;
+            animation: fadeIn 0.8s; 
         }
 
-        /* Background image wall */
-        .background-wall {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 200%; /* Double width for seamless loop */
-            height: 100%;
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: var(--accent);
+            border: none;
+            color: #000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
             display: flex;
-            animation: scroll 20s linear infinite; /* Slow continuous scroll */
-            z-index: -1;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
         }
 
-        .background-wall img {
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            margin: 10px;
-            pointer-events: none; /* Prevent interaction */
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.5);
         }
 
-        @keyframes scroll {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(-50%); /* Move left by half width for loop */
-            }
-        }
+        h1 { font-size: 3.5rem; text-align: center; margin-bottom: 20px; color: var(--accent); }
 
-        /* Dark overlay */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
-            z-index: 0;
-        }
-
-        /* Hero section */
         .hero {
             text-align: center;
-            z-index: 1;
-            position: relative;
+            margin-bottom: 50px;
         }
 
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 2rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .hero button {
-            background-color: #1DB954; /* Spotify green */
-            color: white;
+        .hero button, .paypal-btn {
+            background: var(--accent);
+            color: #000;
             border: none;
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
+            padding: 15px 30px;
             border-radius: 50px;
+            font-size: 1.2rem;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            margin: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-weight: bold;
         }
 
-        .hero button:hover {
-            background-color: #1ED760; /* Lighter green on hover */
+        .hero button:hover, .paypal-btn:hover {
             transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
         }
     </style>
 </head>
 <body>
-    <div class="background-wall">
-        {{range .Artists}}
-        <img src="{{.Image}}" alt="Album Cover">
-        {{end}}
-        <!-- Placeholders if no data -->
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-        <img src="https://via.placeholder.com/200" alt="Placeholder">
-    </div>
-    <div class="overlay"></div>
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+
     <div class="hero">
         <h1>Groupie Tracker</h1>
         <button onclick="window.location.href='/search'">Accéder au site</button>
+
+        <!-- Bouton PayPal -->
+        <form action="https://www.paypal.com/donate" method="post" target="_top" style="display:inline-block;">
+            <input type="hidden" name="business" value="TON_EMAIL_PAYPAL@example.com" />
+            <input type="hidden" name="currency_code" value="USD" />
+            <button type="submit" class="paypal-btn">Faire un don via PayPal</button>
+        </form>
     </div>
+
+    <script>
+        // THEME TOGGLE
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            body.classList.add('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeToggle.textContent = isLight ? '☀️' : '🌙';
+        });
+    </script>
 </body>
 </html>
