@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 )
 
 // --- Récupération des identifiants depuis les variables d'environnement ---
 var (
-	paypalClientID = os.Getenv("Aao_IAK9WsSbSKqMd-HfOea_SwHvbJAaeJjpXC8eOmwNm5sj6s6kOLUoRSxOaTsnhR8Dr7oflFu2hj4e") // Exemple: "Aao_IAK9WsSbSKqMd..."
-	paypalSecret   = os.Getenv("EGCbuKbWGfDNLQtzBx9BCBKj3RiMQ8p0AoBRCTtAKgNc1CHK8Y2xkjmnPAQPiUbXrRhuIphU7Hklj0Wg") // Exemple: "TON_SECRET_SANDBOX"
+	paypalClientID = "Aao_IAK9WsSbSKqMd-HfOea_SwHvbJAaeJjpXC8eOmwNm5sj6s6kOLUoRSxOaTsnhR8Dr7oflFu2hj4e" // Exemple: "Aao_IAK9WsSbSKqMd..."
+	paypalSecret   = "EGCbuKbWGfDNLQtzBx9BCBKj3RiMQ8p0AoBRCTtAKgNc1CHK8Y2xkjmnPAQPiUbXrRhuIphU7Hklj0Wg" // Exemple: "TON_SECRET_SANDBOX"
 )
 
 // getPayPalToken récupère un token OAuth2 auprès de PayPal

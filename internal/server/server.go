@@ -57,6 +57,7 @@ type SearchResult struct {
 }
 
 // --- VARIABLES GLOBALES ---
+
 var (
 	allArtists   []Artist
 	allRelations []Relations
@@ -64,11 +65,12 @@ var (
 	httpClient   = &http.Client{Timeout: 10 * time.Second}
 )
 
-// Run démarre le serveur HTTP et initialise les données
+// --- RUN SERVER ---
+
 func Run() {
 	log.Println("Démarrage du serveur...")
 
-	// Chargement initial (Custom immédiat)
+	// Chargement initial des artistes custom
 	mutex.Lock()
 	allArtists = getCustomArtists()
 	for _, art := range allArtists {
@@ -76,26 +78,30 @@ func Run() {
 	}
 	mutex.Unlock()
 
-	// Chargement API en arrière-plan (non bloquant)
+	// Chargement des données API en arrière-plan
 	go loadApiData()
 
+	// Fichiers statiques
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	// Routes principales
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/search", indexHandler)
 	http.HandleFunc("/explore", exploreHandler)
 	http.HandleFunc("/artist", artistHandler)
 	http.HandleFunc("/api/artists", apiArtistsHandler)
 	http.HandleFunc("/api/search", searchHandler)
-	http.HandleFunc("/api/paypal/create-order", createOrderHandler)
-	http.HandleFunc("/api/paypal/capture-order", captureOrderHandler)
+
+	// Routes PayPal (handlers exportés)
+	http.HandleFunc("/api/paypal/create-order", CreateOrderHandler)
+	http.HandleFunc("/api/paypal/capture-order", CaptureOrderHandler)
 
 	log.Println("Serveur prêt sur http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-// --- LOGIQUE DE CHARGEMENT ---
+// --- CHARGEMENT DES DONNEES ---
 
 func loadApiData() {
 	log.Println("Connexion à l'API en cours...")
@@ -121,7 +127,7 @@ func loadApiData() {
 	}
 }
 
-// --- HOME HANDLER ---
+// --- HANDLERS ---
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -140,13 +146,12 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := PageData{
-		Artists: currentArtists,
+	data := PageData{Artists: currentArtists}
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur rendu template", http.StatusInternalServerError)
+		log.Println("Erreur Execute:", err)
 	}
-	tmpl.Execute(w, data)
 }
-
-// --- EXPLORE HANDLER ---
 
 func exploreHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/explore" {
@@ -160,20 +165,19 @@ func exploreHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Artists []Artist
-	}{
-		Artists: artists,
-	}
+	}{Artists: artists}
 
 	tmpl, err := template.ParseFiles("./templates/explore_home.html")
 	if err != nil {
-		http.Error(w, "Erreur lors du chargement de la page", http.StatusInternalServerError)
+		http.Error(w, "Erreur template", http.StatusInternalServerError)
 		log.Println("Erreur template:", err)
 		return
 	}
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur rendu template", http.StatusInternalServerError)
+		log.Println("Erreur Execute:", err)
+	}
 }
-
-// --- INDEX HANDLER (Search/Browse Page) ---
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/search" {
@@ -236,19 +240,24 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		Artists: filtered,
 		Filters: FilterData{MinCreation: minC, MaxCreation: maxC, MinAlbum: minA, MaxAlbum: maxA},
 	}
+
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		http.Error(w, "Erreur index.html", 500)
 		return
 	}
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur rendu template", http.StatusInternalServerError)
+	}
 }
-
-// --- ARTIST HANDLER ---
 
 func artistHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	id, _ := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID invalide", http.StatusBadRequest)
+		return
+	}
 
 	var selected Artist
 	mutex.Lock()
@@ -275,14 +284,13 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil && len(fetchedRel.DatesLocations) > 0 {
 			rel = fetchedRel
 		} else {
-			log.Printf("Mode Simulation activé pour l'artiste ID %d\n", id)
+			log.Printf("Mode simulation activé pour l'artiste ID %d\n", id)
 			rel = generateMockRelation(id)
 		}
 	}
 
 	data := ArtistPageData{Artist: selected, Relations: rel}
 
-	// Générer le JSON des locations pour le template
 	locations := []string{}
 	for loc := range rel.DatesLocations {
 		locations = append(locations, loc)
@@ -295,10 +303,10 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erreur template", 500)
 		return
 	}
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur rendu template", http.StatusInternalServerError)
+	}
 }
-
-// --- SEARCH HANDLER ---
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := strings.ToLower(r.URL.Query().Get("q"))
@@ -314,7 +322,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	mutex.Unlock()
 
 	seen := make(map[string]bool)
-
 	for _, a := range artists {
 		if strings.Contains(strings.ToLower(a.Name), query) {
 			addResult(&results, a.Name, "Artiste", a.Id, seen)
@@ -347,11 +354,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
-
-// --- API ARTISTS HANDLER ---
 
 func apiArtistsHandler(w http.ResponseWriter, r *http.Request) {
 	mutex.Lock()
@@ -362,7 +368,7 @@ func apiArtistsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(currentArtists)
 }
 
-// --- API CALLS ---
+// --- APPELS API EXTERNES ---
 
 func getAllRelationsIndex() (RelationsIndex, error) {
 	resp, err := httpClient.Get("https://groupietrackers.herokuapp.com/api/relations")
@@ -376,8 +382,8 @@ func getAllRelationsIndex() (RelationsIndex, error) {
 	}
 
 	var idx RelationsIndex
-	if decErr := json.NewDecoder(resp.Body).Decode(&idx); decErr != nil {
-		return RelationsIndex{}, decErr
+	if err := json.NewDecoder(resp.Body).Decode(&idx); err != nil {
+		return RelationsIndex{}, err
 	}
 	return idx, nil
 }
@@ -394,8 +400,8 @@ func getArtists() ([]Artist, error) {
 	}
 
 	var arr []Artist
-	if decErr := json.NewDecoder(resp.Body).Decode(&arr); decErr != nil {
-		return nil, decErr
+	if err := json.NewDecoder(resp.Body).Decode(&arr); err != nil {
+		return nil, err
 	}
 	return arr, nil
 }
@@ -412,13 +418,13 @@ func getRelation(id int) (Relations, error) {
 	}
 
 	var r Relations
-	if decErr := json.NewDecoder(resp.Body).Decode(&r); decErr != nil {
-		return Relations{}, decErr
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+		return Relations{}, err
 	}
 	return r, nil
 }
 
-// --- UTILITY FUNCTIONS ---
+// --- UTILS ---
 
 func extractYear(d string) int {
 	parts := strings.Split(d, "-")
@@ -437,7 +443,7 @@ func addResult(res *[]SearchResult, txt, typ string, id int, seen map[string]boo
 	}
 }
 
-// --- MOCK DATA GENERATOR ---
+// --- MOCK DATA ---
 
 func generateMockRelation(id int) Relations {
 	return Relations{
