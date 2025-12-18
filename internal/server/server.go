@@ -88,6 +88,8 @@ func Run() {
 	http.HandleFunc("/artist", artistHandler)
 	http.HandleFunc("/api/artists", apiArtistsHandler)
 	http.HandleFunc("/api/search", searchHandler)
+	http.HandleFunc("/api/paypal/create-order", createOrderHandler)
+	http.HandleFunc("/api/paypal/capture-order", captureOrderHandler)
 
 	log.Println("Serveur prêt sur http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
