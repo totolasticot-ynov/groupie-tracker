@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	paypalClientID = "Aao_IAK9WsSbSKqMd-HfOea_SwHvbJAaeJjpXC8eOmwNm5sj6s6kOLUoRSxOaTsnhR8Dr7oflFu2hj4e"
-	paypalSecret   = "EGCbuKbWGfDNLQtzBx9BCBKj3RiMQ8p0AoBRCTtAKgNc1CHK8Y2xkjmnPAQPiUbXrRhuIphU7Hklj0Wg"
+	paypalClientID = "TON_CLIENT_ID_SANDBOX_GROUPIE_TRACKER"
+	paypalSecret   = "TON_SECRET_SANDBOX_GROUPIE_TRACKER"
 )
 
-func getPayPalToken() string {
+func getPayPalToken() (string, error) {
 	req, _ := http.NewRequest(
 		"POST",
 		"https://api-m.sandbox.paypal.com/v1/oauth2/token",
@@ -22,19 +22,26 @@ func getPayPalToken() string {
 	req.SetBasicAuth(paypalClientID, paypalSecret)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
 	defer resp.Body.Close()
 
 	var result struct {
 		AccessToken string `json:"access_token"`
 	}
-
 	json.NewDecoder(resp.Body).Decode(&result)
-	return result.AccessToken
+
+	return result.AccessToken, nil
 }
 
-func CreateOrder(w http.ResponseWriter, r *http.Request) {
-	token := getPayPalToken()
+func createOrderHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := getPayPalToken()
+	if err != nil {
+		http.Error(w, "PayPal token error", 500)
+		return
+	}
 
 	body := `{
 		"intent": "CAPTURE",
@@ -61,13 +68,17 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
-func CaptureOrder(w http.ResponseWriter, r *http.Request) {
+func captureOrderHandler(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		OrderID string `json:"orderID"`
 	}
-
 	json.NewDecoder(r.Body).Decode(&data)
-	token := getPayPalToken()
+
+	token, err := getPayPalToken()
+	if err != nil {
+		http.Error(w, "PayPal token error", 500)
+		return
+	}
 
 	req, _ := http.NewRequest(
 		"POST",
