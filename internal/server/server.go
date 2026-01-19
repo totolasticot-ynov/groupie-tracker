@@ -115,7 +115,7 @@ func loadApiData() {
 		mutex.Unlock()
 		log.Println("Relations chargées")
 	} else {
-		log.Println("API Relations indisponible (mode simulation)")
+		log.Printf("API Relations indisponible: %v (mode simulation)\n", err)
 	}
 }
 
@@ -302,6 +302,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := strings.ToLower(r.URL.Query().Get("q"))
 	results := []SearchResult{}
 	if query == "" {
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(results)
 		return
 	}
@@ -363,7 +364,7 @@ func apiArtistsHandler(w http.ResponseWriter, r *http.Request) {
 // --- API CALLS ---
 
 func getAllRelationsIndex() (RelationsIndex, error) {
-	resp, err := httpClient.Get("https://groupietrackers.herokuapp.com/api/relations")
+	resp, err := httpClient.Get("https://groupietrackers.herokuapp.com/api/relation")
 	if err != nil {
 		return RelationsIndex{}, err
 	}
