@@ -2,159 +2,138 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Groupie Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker - Découvrez les Artistes</title>
     <style>
-        :root { --bg: #121212; --card: #181818; --accent: #1db954; --text: #fff; --hover: #282828; }
-        
-        body.light-mode {
-            --bg: #f5f5f5;
-            --card: #fff;
-            --text: #000;
-            --hover: #e8e8e8;
-        }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; animation: fadeIn 0.8s; }
-        h1 { text-align: center; margin-bottom: 40px; font-size: 3.5rem; letter-spacing: -2px; color: var(--accent); }
+        :root { --bg: #0f0f0f; --card: #1a1a1a; --accent: #1db954; --text: #fff; --border: #333; --label: #888; }
+        body.light-mode { --bg: #f5f5f5; --card: #fff; --text: #000; --border: #ddd; --label: #666; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
 
-        /* SEARCH BAR */
-        .search-box { max-width: 600px; margin: 0 auto 40px; position: relative; z-index: 100; }
-        #search-input { width: 100%; padding: 18px 25px; border-radius: 50px; background: #000; border: 2px solid #333; color: white; font-size: 1.1rem; outline: none; transition: 0.3s; }
-        #search-input:focus { border-color: var(--accent); box-shadow: 0 0 20px rgba(29, 185, 84, 0.3); }
-        
-        body.light-mode #search-input { background: #fff; border-color: #ccc; color: #000; }
-        
-        #suggestions { position: absolute; top: 65px; width: 100%; background: #222; border-radius: 15px; overflow: hidden; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        body.light-mode #suggestions { background: #fff; border: 1px solid #ddd; }
-        
-        .sugg-item { padding: 15px 25px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .sugg-item:hover { background: #333; }
-        
-        body.light-mode .sugg-item { border-color: #ddd; }
-        body.light-mode .sugg-item:hover { background: #f5f5f5; }
-        
-        .sugg-tag { font-size: 0.75rem; border: 1px solid var(--accent); color: var(--accent); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(29, 185, 84, 0.1); border-bottom: 1px solid var(--border); }
+        .logo { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+        header a { color: var(--text); text-decoration: none; margin: 0 15px; transition: 0.2s; }
+        header a:hover { color: var(--accent); }
 
-        /* FILTERS */
-        .filters { background: var(--card); padding: 30px; border-radius: 20px; max-width: 1000px; margin: 0 auto 50px; border: 1px solid #333; }
-        
-        body.light-mode .filters { border-color: #ddd; }
-        
-        .f-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-bottom: 20px; }
-        .f-group h3 { color: #888; font-size: 0.8rem; text-transform: uppercase; text-align: center; margin-bottom: 10px; }
-        
-        body.light-mode .f-group h3 { color: #666; }
-        
-        input[type="number"] { background: #333; border: none; color: white; padding: 8px; border-radius: 5px; width: 80px; text-align: center; }
-        
-        body.light-mode input[type="number"] { background: #e8e8e8; color: #000; }
-        
-        button { background: var(--accent); color: #000; border: none; padding: 12px 30px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; }
-        button:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent); }
+        .hero { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, rgba(29, 185, 84, 0.15) 0%, transparent 100%); }
+        .hero h1 { font-size: 3rem; color: var(--accent); margin-bottom: 20px; }
+        .hero p { color: var(--label); font-size: 1.1rem; margin-bottom: 30px; }
 
-        /* GRID */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; }
-        .card-link { text-decoration: none; color: inherit; }
-        .card { background: var(--card); border-radius: 15px; overflow: hidden; transition: 0.4s; height: 100%; position: relative; border: 1px solid transparent; }
-        .card:hover { transform: translateY(-10px); border-color: var(--accent); background: var(--hover); }
-        .card img { width: 100%; height: 220px; object-fit: cover; filter: grayscale(20%); transition: 0.4s; }
-        .card:hover img { filter: grayscale(0%); }
-        .info { padding: 20px; text-align: center; }
-        .info h3 { font-size: 1.1rem; margin-bottom: 5px; font-weight: 700; }
-        .info p { color: #888; font-size: 0.9rem; }
-    body.light-mode .info p { color: #666; }
+        .search-box { max-width: 600px; margin: 0 auto 40px; position: relative; }
+        #search-input { width: 100%; padding: 12px 20px; border: 2px solid var(--accent); border-radius: 25px; background: rgba(29, 185, 84, 0.1); color: var(--text); font-size: 1rem; }
+        #search-input::placeholder { color: var(--label); }
+        #suggestions { position: absolute; top: 50px; width: 100%; background: var(--card); border-radius: 8px; display: none; max-height: 300px; overflow-y: auto; border: 1px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .sugg-item { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; color: var(--text); }
+        .sugg-item:hover { background: rgba(29, 185, 84, 0.1); color: var(--accent); }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .filters { background: var(--card); padding: 30px; border-radius: 10px; max-width: 900px; margin: 0 auto 40px; border: 1px solid var(--border); }
+        .filter-row { display: flex; gap: 30px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; }
+        .filter-group label { color: var(--label); font-size: 0.9rem; font-weight: bold; }
+        input[type="number"] { padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); width: 70px; }
+        .members-group { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        button { background: var(--accent); color: #000; border: none; padding: 10px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #1ed760; }
+        .reset-link { color: var(--label); margin-left: 15px; text-decoration: none; transition: 0.2s; }
+        .reset-link:hover { color: var(--accent); }
 
-        /* THEME TOGGLE */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            background: var(--accent);
-            border: none;
-            color: #000;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; }
+        .card { background: var(--card); border-radius: 10px; overflow: hidden; text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid var(--border); }
+        .card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(29, 185, 84, 0.2); }
+        .card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+        .card-info { padding: 15px; text-align: center; }
+        .card-info h3 { color: var(--accent); margin: 10px 0 5px; font-size: 1.1rem; }
+        .card-info p { color: var(--label); font-size: 0.9rem; }
 
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.5);
+        .theme-toggle { position: fixed; bottom: 30px; right: 30px; z-index: 10000; background: var(--accent); color: #000; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3); }
+        .theme-toggle:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(29, 185, 84, 0.4); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+            header { flex-direction: column; gap: 10px; }
         }
     </style>
 </head>
 <body>
     <button class="theme-toggle" id="themeToggle">🌙</button>
-    <h1>Groupie Tracker</h1>
 
-    <div class="search-box">
-        <input type="text" id="search-input" placeholder="Rechercher un artiste, lieu, date...">
-        <div id="suggestions"></div>
-    </div>
+    <header>
+        <div class="logo">🎵 Groupie Tracker</div>
+        <div>
+            <a href="/">Accueil</a>
+            <a href="/search">Explorer</a>
+        </div>
+    </header>
 
-    <div class="filters">
+    <section class="hero">
+        <h1>Découvrez les Artistes</h1>
+        <p>Explorez les concerts et tournées des plus grands artistes</p>
+
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="🔍 Rechercher un artiste...">
+            <div id="suggestions"></div>
+        </div>
+    </section>
+
+    <section class="filters">
         <form action="/search" method="GET">
-            <div class="f-row">
-                <div class="f-group">
-                    <h3>Année Création</h3>
-                    <input type="number" name="minCreation" placeholder="Min" value="{{.Filters.MinCreation}}"> - 
-                    <input type="number" name="maxCreation" placeholder="Max" value="{{.Filters.MaxCreation}}">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Année création</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" name="minCreation" placeholder="Min">
+                        <span>-</span>
+                        <input type="number" name="maxCreation" placeholder="Max">
+                    </div>
                 </div>
-                <div class="f-group">
-                    <h3>Année Album</h3>
-                    <input type="number" name="minAlbum" placeholder="Min" value="{{.Filters.MinAlbum}}"> - 
-                    <input type="number" name="maxAlbum" placeholder="Max" value="{{.Filters.MaxAlbum}}">
+
+                <div class="filter-group">
+                    <label>Année album</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" name="minAlbum" placeholder="Min">
+                        <span>-</span>
+                        <input type="number" name="maxAlbum" placeholder="Max">
+                    </div>
                 </div>
             </div>
-            <div class="f-group" style="text-align: center;">
-                <h3>Membres</h3>
-                <label><input type="checkbox" name="members" value="1"> 1</label>
-                <label><input type="checkbox" name="members" value="2"> 2</label>
-                <label><input type="checkbox" name="members" value="3"> 3</label>
-                <label><input type="checkbox" name="members" value="4"> 4</label>
-                <label><input type="checkbox" name="members" value="5"> 5+</label>
+
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Membres</label>
+                    <div class="members-group">
+                        <label><input type="checkbox" name="members" value="1"> 1</label>
+                        <label><input type="checkbox" name="members" value="2"> 2</label>
+                        <label><input type="checkbox" name="members" value="3"> 3</label>
+                        <label><input type="checkbox" name="members" value="4"> 4</label>
+                        <label><input type="checkbox" name="members" value="5"> 5+</label>
+                    </div>
+                </div>
             </div>
+
             <div style="text-align: center; margin-top: 20px;">
-                <button type="submit">Appliquer Filtres</button>
-                <a href="/search" style="color: #666; margin-left: 15px; text-decoration: none; font-size: 0.9rem;">Reset</a>
+                <button type="submit">Appliquer</button>
+                <a href="/search" class="reset-link">Réinitialiser</a>
             </div>
         </form>
-    </div>
+    </section>
 
-    <div class="grid">
+    <section class="grid">
         {{ range .Artists }}
-            <a href="/artist?id={{.Id}}" class="card-link">
-                <div class="card">
-                    {{ if .Image }}<img src="{{ .Image }}">{{ else }}<img src="https://via.placeholder.com/300">{{ end }}
-                    <div class="info">
-                        <h3>{{ .Name }}</h3>
-                        <p>{{ .CreationDate }}</p>
-                    </div>
+            <a href="/artist?id={{.Id}}" class="card">
+                <img src="{{.Image}}" alt="{{.Name}}" loading="lazy">
+                <div class="card-info">
+                    <h3>{{ .Name }}</h3>
+                    <p>📅 {{.CreationDate}}</p>
                 </div>
             </a>
         {{ end }}
-    </div>
+    </section>
 
-    <script src="/static/script.js"></script>
     <script>
-        // THEME TOGGLE
         const themeToggle = document.getElementById('themeToggle');
-
-        // Charger le thème sauvegardé
         const savedTheme = localStorage.getItem('theme') || 'dark';
+        
         if (savedTheme === 'light') {
             document.body.classList.add('light-mode');
             themeToggle.textContent = '☀️';
@@ -165,6 +144,50 @@
             const isLight = document.body.classList.contains('light-mode');
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
             themeToggle.textContent = isLight ? '☀️' : '🌙';
+        });
+
+        const searchInput = document.getElementById('search-input');
+        const suggestionsBox = document.getElementById('suggestions');
+        let debounceTimer;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+
+            if (!query) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+                    const results = await response.json();
+
+                    suggestionsBox.innerHTML = '';
+                    
+                    if (results && results.length > 0) {
+                        results.forEach(result => {
+                            const item = document.createElement('div');
+                            item.className = 'sugg-item';
+                            item.textContent = result.name;
+                            item.onclick = () => {
+                                window.location.href = `/artist?id=${result.id}`;
+                            };
+                            suggestionsBox.appendChild(item);
+                        });
+                        suggestionsBox.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error('Erreur:', err);
+                }
+            }, 300);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
         });
     </script>
 </body>

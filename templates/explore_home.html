@@ -3,27 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Découvrez les artistes, leurs concerts et tournées mondiales - Groupie Tracker">
+<meta name="theme-color" content="#1db954">
 <title>Groupie Tracker - Découvrez les Artistes</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 
 :root{
     --primary:#1DB954;
-    --primary-light:#1ED760;
-    --bg:#0a0a0a;
-    --card:#121212;
+    --primary-light:#5dd989;
+    --bg:#0f0f0f;
+    --card:#1a1a1a;
     --text:#ffffff;
-    --text-muted:#b3b3b3;
+    --text-muted:#888888;
+    --secondary:#191919;
+}
+
+body.light-mode {
+    --bg: #f8f9fa;
+    --card: #fff;
+    --text: #000;
+    --text-muted: #666;
+    --secondary: #f5f5f5;
 }
 
 body{
-    font-family:'Poppins',sans-serif;
+    font-family:'Inter', sans-serif;
     background:var(--bg);
     color:var(--text);
     min-height:100vh;
+    overflow-x:hidden;
+    transition: background-color 0.3s ease;
 }
 
 /* Navbar */
@@ -31,170 +47,471 @@ body{
     position:fixed;
     top:0;
     width:100%;
-    background:#0a0a0aee;
+    background:rgba(15, 15, 15, 0.95);
+    backdrop-filter:blur(10px);
     padding:20px 40px;
     z-index:100;
-    border-bottom:1px solid rgba(29,185,84,.1);
+    border-bottom:1px solid rgba(29,185,84,.15);
+    will-change: contents;
 }
+
 .navbar-content{
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
     display:flex;
     justify-content:space-between;
     align-items:center;
 }
+
 .logo{
-    font-size:1.5rem;
+    font-size:1.8rem;
     font-weight:800;
     color:var(--primary);
-}
-
-/* Hero */
-.content{
-    padding-top:120px;
     display:flex;
-    flex-direction:column;
     align-items:center;
-    text-align:center;
+    gap:10px;
+    letter-spacing:-0.5px;
 }
 
-.hero h1{
-    font-size:4rem;
-    margin-bottom:20px;
-}
+.logo i { font-size:1.6rem; }
 
-.hero p{
-    max-width:700px;
-    color:var(--text-muted);
-    margin-bottom:40px;
-    font-size:1.2rem;
-}
-
-.cta-buttons{
+.nav-links {
     display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-    justify-content:center;
-}
-
-.btn-primary,.btn-secondary{
-    padding:16px 40px;
-    border-radius:50px;
-    border:none;
-    cursor:pointer;
-    font-weight:700;
-    font-size:1rem;
-    transition:.3s;
-}
-
-.btn-primary{
-    background:linear-gradient(135deg,var(--primary),var(--primary-light));
-    color:#000;
-    box-shadow:0 8px 25px rgba(29,185,84,.4);
-}
-
-.btn-primary:hover{transform:scale(1.05);}
-
-.btn-secondary{
-    background:transparent;
-    border:2px solid rgba(255,255,255,.3);
-    color:var(--text-muted);
-}
-
-.btn-secondary:hover{background:rgba(255,255,255,.05);}
-
-/* PayPal */
-.paypal-container{
-    margin-top:40px;
-}
-
-.paypal-btn{
-    background:linear-gradient(135deg,#1DB954,#1ED760);
-    color:#000;
-    padding:16px 45px;
-    border:none;
-    border-radius:50px;
-    font-size:1rem;
-    font-weight:800;
-    cursor:pointer;
-    box-shadow:0 8px 30px rgba(29,185,84,.4);
-    transition:.3s;
-}
-
-.paypal-btn:hover{
-    transform:scale(1.05);
-    box-shadow:0 12px 40px rgba(29,185,84,.6);
-}
-
-/* Stats */
-.stats{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
     gap:30px;
-    margin-top:80px;
-    max-width:900px;
-    width:100%;
 }
 
-.stat-card{
-    background:var(--card);
-    padding:30px;
-    border-radius:15px;
+.nav-links a {
+    color:var(--text);
+    text-decoration:none;
+    font-weight:600;
+    transition: color 0.2s;
 }
 
-.stat-number{
-    font-size:2.5rem;
+.nav-links a:hover {
     color:var(--primary);
-    font-weight:800;
 }
 
-.stat-label{
-    color:var(--text-muted);
+.nav-links a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    background:var(--primary);
+    border:none;
+    color:#000;
+    border-radius:50%;
+    width:50px;
+    height:50px;
+    font-size:1.2rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(29,185,84,.3);
+    font-weight: 700;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(20deg);
+    box-shadow: 0 8px 25px rgba(29,185,84,.4);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid rgba(29,185,84,.6);
+    outline-offset: 2px;
+}
+
+/* Hero Section - OPTIMIZED */
+.hero {
+    padding-top: 180px;
+    padding-bottom: 100px;
+    background: linear-gradient(135deg, rgba(29, 185, 84, 0.1) 0%, rgba(29, 185, 84, 0.05) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(29, 185, 84, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: -15%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(29, 185, 84, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: slideUp 0.6s ease-out;
+}
+
+.hero h1 {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+}
+
+.hero p {
+    max-width: 700px;
+    margin: 0 auto 50px;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    line-height: 1.6;
+}
+
+/* CTA Buttons - OPTIMIZED */
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 16px 50px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.05rem;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #000;
+    box-shadow: 0 10px 30px rgba(29,185,84,.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(29,185,84,.5);
+}
+
+.btn-primary:focus-visible {
+    outline: 2px solid rgba(29,185,84,.6);
+    outline-offset: 2px;
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,.08);
+    border: 2px solid rgba(29, 185, 84, 0.4);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: rgba(29, 185, 84, 0.15);
+    border-color: var(--primary);
+}
+
+.btn-secondary:focus-visible {
+    outline: 2px solid rgba(29,185,84,.6);
+    outline-offset: 2px;
+}
+
+/* PayPal Section - OPTIMIZED */
+.paypal-container {
+    margin: 40px 0 80px;
+    padding: 40px;
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid rgba(29, 185, 84, 0.15);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.paypal-title {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.paypal-desc {
+    text-align: center;
+    color: var(--text-muted);
+    margin-bottom: 25px;
+    font-size: 0.95rem;
+}
+
+.paypal-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #000;
+    padding: 16px 45px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(29,185,84,.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.paypal-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(29,185,84,.5);
+}
+
+.paypal-btn:focus-visible {
+    outline: 2px solid rgba(29,185,84,.6);
+    outline-offset: 2px;
+}
+
+/* Stats Section - OPTIMIZED */
+.stats-section {
+    padding: 80px 40px;
+    background: rgba(29, 185, 84, 0.05);
+    border-top: 1px solid rgba(29, 185, 84, 0.15);
+    border-bottom: 1px solid rgba(29, 185, 84, 0.15);
+}
+
+.stats-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 60px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.stat-card {
+    background: var(--card);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(29, 185, 84, 0.15);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    text-align: center;
+    cursor: pointer;
+    will-change: transform;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 20px 50px rgba(29, 185, 84, 0.2);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    color: var(--primary);
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Footer CTA */
+.footer-cta {
+    padding: 80px 40px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(29, 185, 84, 0.1) 0%, rgba(29, 185, 84, 0.05) 100%);
+}
+
+.footer-cta h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+}
+
+.footer-cta p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ANIMATIONS */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar { padding: 15px 20px; }
+    .logo { font-size: 1.3rem; }
+    .nav-links { gap: 15px; font-size: 0.9rem; }
+    .hero { padding-top: 130px; padding-bottom: 60px; }
+    .hero h1 { font-size: 3rem; }
+    .hero p { font-size: 1rem; }
+    .cta-buttons { gap: 10px; }
+    .btn-primary, .btn-secondary { padding: 12px 30px; font-size: 0.95rem; }
+    .paypal-container { margin: 30px 20px; padding: 25px; }
+    .stats { gap: 20px; }
+    .stat-card { padding: 25px; }
+    .stat-number { font-size: 2rem; }
+    .hero-content { padding: 0 20px; }
+    .stats-section { padding: 50px 20px; }
+    .footer-cta { padding: 50px 20px; }
+    .footer-cta h2 { font-size: 1.8rem; }
+}
+
+@media (max-width: 480px) {
+    .hero h1 { font-size: 2rem; }
+    .hero p { font-size: 0.95rem; }
+    .cta-buttons { flex-direction: column; }
+    .btn-primary, .btn-secondary { width: 100%; }
+    .nav-links { flex-direction: column; gap: 10px; }
 }
 </style>
 </head>
 
 <body>
 
+<button class="theme-toggle" id="themeToggle" aria-label="Basculer le mode sombre/clair">🌙</button>
+
 <nav class="navbar">
   <div class="navbar-content">
-    <div class="logo">🎵 Groupie Tracker</div>
+    <div class="logo">
+        <i class="fas fa-music"></i>
+        Groupie Tracker
+    </div>
+    <div class="nav-links">
+        <a href="/">Accueil</a>
+        <a href="/search">Explorer</a>
+    </div>
   </div>
 </nav>
 
-<div class="content">
-    <h1>Découvrez les Artistes</h1>
-    <p>Explorez les plus grands artistes du monde, leurs tournées et leurs concerts.</p>
+<section class="hero">
+    <div class="hero-content">
+        <h1>Découvrez les Artistes</h1>
+        <p>Explorez les plus grands artistes du monde, leurs tournées, concerts et emplacements de performance.</p>
 
-    <div class="cta-buttons">
-        <button class="btn-primary" onclick="window.location.href='/search'">Commencer</button>
-        <button class="btn-secondary" onclick="document.getElementById('stats').scrollIntoView({behavior:'smooth'})">En savoir plus</button>
+        <div class="cta-buttons">
+            <button class="btn-primary" onclick="window.location.href='/search'">
+                <i class="fas fa-play"></i> Commencer l'exploration
+            </button>
+            <button class="btn-secondary" onclick="document.getElementById('stats').scrollIntoView({behavior:'smooth'})">
+                <i class="fas fa-info-circle"></i> En savoir plus
+            </button>
+        </div>
+
+        <!-- PAYPAL -->
+        <div class="paypal-container">
+            <div class="paypal-title">❤️ Soutenir le projet</div>
+            <div class="paypal-desc">Aidez-nous à maintenir et améliorer cette plateforme</div>
+            <form action="https://www.sandbox.paypal.com/donate" method="post" target="_top">
+                <input type="hidden" name="business" value="sb-43e5c648109286@business.example.com">
+                <input type="hidden" name="currency_code" value="EUR">
+                <button type="submit" class="paypal-btn">Faire un don</button>
+            </form>
+        </div>
     </div>
+</section>
 
-    <!-- PAYPAL -->
-    <div class="paypal-container">
-        <form action="https://www.sandbox.paypal.com/donate" method="post" target="_top">
-            <input type="hidden" name="business" value="sb-43e5c648109286@business.example.com">
-            <input type="hidden" name="currency_code" value="EUR">
-            <button class="paypal-btn">❤️ Soutenir le projet</button>
-        </form>
-    </div>
-
+<section class="stats-section">
+    <h2 class="stats-title">Nos Chiffres</h2>
     <div class="stats" id="stats">
         <div class="stat-card">
+            <div class="stat-icon">🎤</div>
             <div class="stat-number">{{len .Artists}}</div>
             <div class="stat-label">Artistes</div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">🎵</div>
             <div class="stat-number">1000+</div>
             <div class="stat-label">Concerts</div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">🌍</div>
             <div class="stat-number">50+</div>
             <div class="stat-label">Pays</div>
         </div>
     </div>
-</div>
+</section>
+
+<section class="footer-cta">
+    <h2>Prêt à explorer?</h2>
+    <p>Plongez dans l'univers des plus grands artistes de la musique mondiale</p>
+    <button class="btn-primary" onclick="window.location.href='/search'" style="margin-top: 20px;">
+        <i class="fas fa-search"></i> Découvrir maintenant
+    </button>
+</section>
+
+<script defer>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            themeToggle.textContent = isLight ? '☀️' : '🌙';
+        });
+    });
+</script>
 
 </body>
 </html>

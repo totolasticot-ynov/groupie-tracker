@@ -127,6 +127,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
 	mutex.Lock()
 	currentArtists := allArtists
 	mutex.Unlock()
@@ -151,6 +153,8 @@ func exploreHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 
 	mutex.Lock()
 	artists := allArtists
@@ -178,6 +182,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 
 	mutex.Lock()
 	currentArtists := allArtists
@@ -245,6 +251,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 // --- ARTIST HANDLER ---
 
 func artistHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+
 	idStr := r.URL.Query().Get("id")
 	id, _ := strconv.Atoi(idStr)
 
@@ -299,10 +307,12 @@ func artistHandler(w http.ResponseWriter, r *http.Request) {
 // --- SEARCH HANDLER ---
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	query := strings.ToLower(r.URL.Query().Get("q"))
 	results := []SearchResult{}
+
 	if query == "" {
-		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(results)
 		return
 	}
@@ -346,7 +356,12 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+
+	// Assurer que results est toujours un array (pas null)
+	if results == nil {
+		results = []SearchResult{}
+	}
+
 	json.NewEncoder(w).Encode(results)
 }
 
