@@ -1,434 +1,200 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Groupie Tracker - Découvrez les Artistes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groupie Tracker - Découvrez les Artistes</title>
 
-        :root {
-            --primary: #1DB954;
-            --primary-light: #1ED760;
-            --dark-bg: #0a0a0a;
-            --card-bg: #121212;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --accent-purple: #333333;
-            --accent-pink: #1DB954;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #0a0a0a;
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
 
-        /* Animated background elements */
-        .background-decoration {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
+:root{
+    --primary:#1DB954;
+    --primary-light:#1ED760;
+    --bg:#0a0a0a;
+    --card:#121212;
+    --text:#ffffff;
+    --text-muted:#b3b3b3;
+}
 
-        .blob-1 {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle at 30% 50%, rgba(29, 185, 84, 0.05), transparent);
-            border-radius: 45% 55% 52% 48%;
-            top: -100px;
-            right: -100px;
-            animation: float 8s ease-in-out infinite;
-        }
+body{
+    font-family:'Poppins',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
 
-        .blob-2 {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle at 60% 50%, rgba(29, 185, 84, 0.03), transparent);
-            border-radius: 40% 60% 50% 50%;
-            bottom: -50px;
-            left: -50px;
-            animation: float 10s ease-in-out infinite reverse;
-        }
+/* Navbar */
+.navbar{
+    position:fixed;
+    top:0;
+    width:100%;
+    background:#0a0a0aee;
+    padding:20px 40px;
+    z-index:100;
+    border-bottom:1px solid rgba(29,185,84,.1);
+}
+.navbar-content{
+    max-width:1200px;
+    margin:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.logo{
+    font-size:1.5rem;
+    font-weight:800;
+    color:var(--primary);
+}
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(30px, -30px) rotate(180deg); }
-        }
+/* Hero */
+.content{
+    padding-top:120px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+}
 
-        /* Content wrapper */
-        .content {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-        }
+.hero h1{
+    font-size:4rem;
+    margin-bottom:20px;
+}
 
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px 40px;
-            z-index: 100;
-            border-bottom: 1px solid rgba(29, 185, 84, 0.05);
-        }
+.hero p{
+    max-width:700px;
+    color:var(--text-muted);
+    margin-bottom:40px;
+    font-size:1.2rem;
+}
 
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+.cta-buttons{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -1px;
-            text-transform: uppercase;
-        }
+.btn-primary,.btn-secondary{
+    padding:16px 40px;
+    border-radius:50px;
+    border:none;
+    cursor:pointer;
+    font-weight:700;
+    font-size:1rem;
+    transition:.3s;
+}
 
-        .theme-toggle {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 2px solid rgba(200, 200, 200, 0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            transition: all 0.3s;
-        }
+.btn-primary{
+    background:linear-gradient(135deg,var(--primary),var(--primary-light));
+    color:#000;
+    box-shadow:0 8px 25px rgba(29,185,84,.4);
+}
 
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(29, 185, 84, 0.1);
-        }
+.btn-primary:hover{transform:scale(1.05);}
 
-        /* Hero section */
-        .hero {
-            text-align: center;
-            margin-top: 80px;
-            max-width: 900px;
-        }
+.btn-secondary{
+    background:transparent;
+    border:2px solid rgba(255,255,255,.3);
+    color:var(--text-muted);
+}
 
-        .hero-badge {
-            display: inline-block;
-            background: rgba(50, 50, 50, 0.3);
-            border: 1px solid rgba(200, 200, 200, 0.2);
-            color: var(--text-secondary);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+.btn-secondary:hover{background:rgba(255,255,255,.05);}
 
-        .hero h1 {
-            font-size: 5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: var(--text-primary);
-            letter-spacing: -2px;
-            line-height: 1.1;
-        }
+/* PayPal */
+.paypal-container{
+    margin-top:40px;
+}
 
-        .hero p {
-            font-size: 1.3rem;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            max-width: 600px;
-            line-height: 1.6;
-        }
+.paypal-btn{
+    background:linear-gradient(135deg,#1DB954,#1ED760);
+    color:#000;
+    padding:16px 45px;
+    border:none;
+    border-radius:50px;
+    font-size:1rem;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 8px 30px rgba(29,185,84,.4);
+    transition:.3s;
+}
 
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 60px;
-        }
+.paypal-btn:hover{
+    transform:scale(1.05);
+    box-shadow:0 12px 40px rgba(29,185,84,.6);
+}
 
-        .btn-primary, .btn-secondary {
-            padding: 16px 40px;
-            border: none;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-family: 'Poppins', sans-serif;
-        }
+/* Stats */
+.stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:30px;
+    margin-top:80px;
+    max-width:900px;
+    width:100%;
+}
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: #000;
-            box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
-        }
+.stat-card{
+    background:var(--card);
+    padding:30px;
+    border-radius:15px;
+}
 
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(29, 185, 84, 0.5);
-        }
+.stat-number{
+    font-size:2.5rem;
+    color:var(--primary);
+    font-weight:800;
+}
 
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid rgba(200, 200, 200, 0.3);
-            color: var(--text-secondary);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(200, 200, 200, 0.5);
-            transform: translateY(-3px);
-        }
-
-        /* Stats section */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin-top: 80px;
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid rgba(29, 185, 84, 0.05);
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            border-color: rgba(29, 185, 84, 0.1);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Featured artists section */
-        .featured-section {
-            margin-top: 100px;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 40px;
-            text-align: center;
-            color: var(--text-primary);
-        }
-
-        .featured-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-        }
-
-        .featured-card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            border: 1px solid rgba(29, 185, 84, 0.05);
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .featured-card:hover {
-            border-color: rgba(29, 185, 84, 0.1);
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .featured-card img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .featured-info {
-            padding: 20px;
-        }
-
-        .featured-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .featured-year {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 3rem;
-            }
-
-            .navbar {
-                padding: 15px 20px;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .btn-primary, .btn-secondary {
-                width: 100%;
-            }
-        }
-    </style>
+.stat-label{
+    color:var(--text-muted);
+}
+</style>
 </head>
+
 <body>
-    <div class="background-decoration">
-        <div class="blob-1"></div>
-        <div class="blob-2"></div>
+
+<nav class="navbar">
+  <div class="navbar-content">
+    <div class="logo">🎵 Groupie Tracker</div>
+  </div>
+</nav>
+
+<div class="content">
+    <h1>Découvrez les Artistes</h1>
+    <p>Explorez les plus grands artistes du monde, leurs tournées et leurs concerts.</p>
+
+    <div class="cta-buttons">
+        <button class="btn-primary" onclick="window.location.href='/search'">Commencer</button>
+        <button class="btn-secondary" onclick="document.getElementById('stats').scrollIntoView({behavior:'smooth'})">En savoir plus</button>
     </div>
 
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="logo">🎵 Groupie Tracker</div>
-            <button class="theme-toggle" id="themeToggle">🌙</button>
-        </div>
-    </nav>
-
-    <div class="content">
-        <div class="hero">
-            <span class="hero-badge">✨ Explorez l'univers de la musique</span>
-            <h1>Découvrez les Artistes</h1>
-            <p>Explorez les plus grands artistes du monde, leurs tournées et leurs lieux de concert. Une expérience musicale immersive vous attend.</p>
-            
-            <div class="cta-buttons">
-                <button class="btn-primary" onclick="window.location.href='/search'">Commencer l'exploration</button>
-                <button class="btn-secondary" onclick="scrollToSection()">En savoir plus</button>
-            </div>
-
-            <!-- Stats section -->
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number">{{len .Artists}}</div>
-                    <div class="stat-label">Artistes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">1000+</div>
-                    <div class="stat-label">Concerts</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">50+</div>
-                    <div class="stat-label">Pays</div>
-                </div>
-            </div>
-
-            <!-- Featured artists -->
-            <div class="featured-section">
-                <h2 class="section-title">Artistes en vedette</h2>
-                <div class="featured-grid">
-                    {{range .Artists}}
-                    <div class="featured-card" onclick="window.location.href='/artist?id={{.Id}}'">
-                        <img src="{{.Image}}" alt="{{.Name}}" onerror="this.src='https://via.placeholder.com/280x250?text={{.Name}}'">
-                        <div class="featured-info">
-                            <div class="featured-name">{{.Name}}</div>
-                            <div class="featured-year">Depuis {{.CreationDate}}</div>
-                        </div>
-                    </div>
-                    {{end}}
-                </div>
-            </div>
-        </div>
+    <!-- PAYPAL -->
+    <div class="paypal-container">
+        <form action="https://www.sandbox.paypal.com/donate" method="post" target="_top">
+            <input type="hidden" name="business" value="sb-43e5c648109286@business.example.com">
+            <input type="hidden" name="currency_code" value="EUR">
+            <button class="paypal-btn">❤️ Soutenir le projet</button>
+        </form>
     </div>
 
-    <script>
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        
-        if (savedTheme === 'light') {
-            document.body.style.background = '#f5f5f5';
-            themeToggle.textContent = '☀️';
-        }
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{len .Artists}}</div>
+            <div class="stat-label">Artistes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">1000+</div>
+            <div class="stat-label">Concerts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">50+</div>
+            <div class="stat-label">Pays</div>
+        </div>
+    </div>
+</div>
 
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.body.style.background === '#0a0a0a' || !document.body.style.background;
-            if (isDark) {
-                document.body.style.background = '#f5f5f5';
-                document.documentElement.style.setProperty('--text-primary', '#000000');
-                document.documentElement.style.setProperty('--text-secondary', '#666666');
-                document.documentElement.style.setProperty('--card-bg', '#ffffff');
-                document.documentElement.style.setProperty('--dark-bg', '#f5f5f5');
-                themeToggle.textContent = '☀️';
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.body.style.background = '#0a0a0a';
-                document.documentElement.style.setProperty('--text-primary', '#ffffff');
-                document.documentElement.style.setProperty('--text-secondary', '#b3b3b3');
-                document.documentElement.style.setProperty('--card-bg', '#121212');
-                document.documentElement.style.setProperty('--dark-bg', '#0a0a0a');
-                themeToggle.textContent = '🌙';
-                localStorage.setItem('theme', 'dark');
-            }
-        });
-
-        function scrollToSection() {
-            const featured = document.querySelector('.featured-section');
-            featured.scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
 </body>
 </html>
